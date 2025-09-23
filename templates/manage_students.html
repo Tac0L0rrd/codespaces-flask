@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="/static/styles.css">
+    <title>Enroll Students</title>
+</head>
+<body>
+    <!-- Navbar -->
+    <div class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-links">
+                <a href="/manage_students" class="nav-link active">Enroll Students</a>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Classes</a>
+                    <div class="dropdown-content">
+                        <a href="/manage_schedule">Manage Schedule</a>
+                        <a href="/mark_attendance">Mark Attendance</a>
+                        <a href="/enter_grades">Enter Grades</a>
+                        <a href="/manage_students" class="active">Enroll Students</a>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Assignments</a>
+                    <div class="dropdown-content">
+                        <a href="/add_assignment">Add Assignment</a>
+                        <a href="/manage_assignments">Manage Assignments</a>
+                        <a href="/teacher_reports">View Reports</a>
+                    </div>
+                </div>
+                <a href="/teacher_settings" class="nav-link">Settings</a>
+                <a href="/logout" class="nav-link">Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="center-wrapper">
+        <div class="dashboard-container card-3d">
+            <h1>Enroll Students</h1>
+            
+            <!-- Subject Selection -->
+            <form method="GET" action="/manage_students" class="form-stack">
+                <div>
+                    <label for="subject_id">Select Subject:</label>
+                    <select name="subject_id" id="subject_id" onchange="this.form.submit()" required>
+                        <option value="" disabled {% if not request.args.get('subject_id') %}selected{% endif %}>Select a Subject</option>
+                        {% for subject in subjects %}
+                        <option value="{{ subject['id'] }}" {% if request.args.get('subject_id')|int == subject['id'] %}selected{% endif %}>
+                            {{ subject['name'] }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+
+            <!-- Enrollment Form -->
+            {% if request.args.get('subject_id') %}
+                <form method="POST" class="form-stack">
+                    <input type="hidden" name="subject_id" value="{{ request.args.get('subject_id') }}">
+                    
+                    {% if students %}
+                        <div>
+                            <label for="student_id">Select Student to Enroll:</label>
+                            <select name="student_id" id="student_id" required>
+                                <option value="" disabled selected>Select a Student</option>
+                                {% for student in students %}
+                                <option value="{{ student['id'] }}">{{ student['username'] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-3d">Enroll Student</button>
+                    {% else %}
+                        <p>No students available for enrollment in this subject.</p>
+                    {% endif %}
+                </form>
+            {% endif %}
+
+            <!-- Back to Dashboard -->
+            <div class="action-buttons">
+                <a href="/teacher_dashboard" class="btn-3d">Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="/static/styles.css">
+    <title>Manage Assignments</title>
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-links">
+                <a href="/manage_assignments" class="nav-link active">Manage Assignments</a>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Classes</a>
+                    <div class="dropdown-content">
+                        <a href="/manage_schedule">Manage Schedule</a>
+                        <a href="/mark_attendance">Mark Attendance</a>
+                        <a href="/enter_grades">Enter Grades</a>
+                        <a href="/manage_students">Enroll Students</a>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Assignments</a>
+                    <div class="dropdown-content">
+                        <a href="/add_assignment">Add Assignment</a>
+                        <a href="/manage_assignments">Manage Assignments</a>
+                        <a href="/teacher_reports">View Reports</a>
+                    </div>
+                </div>
+                <a href="/teacher_settings" class="nav-link">Settings</a>
+                <a href="/logout" class="nav-link">Logout</a>
+            </div>
+        </div>
+    </div>
+    <div class="center-wrapper">
+        <div class="dashboard-container card-3d">
+            <h1>Manage Assignments</h1>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Assignment Name</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for assignment in assignments %}
+                        <tr>
+                            <td>{{ assignment['subject_name'] }}</td>
+                            <td>{{ assignment['name'] }}</td>
+                            <td>
+                                <form method="POST" style="display: inline;">
+                                    <input type="hidden" name="assignment_id" value="{{ assignment['id'] }}">
+                                    <input type="hidden" name="action" value="delete">
+                                    <button type="submit" class="btn-3d" style="padding: 0.5em 1em; font-size: 0.9em;">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

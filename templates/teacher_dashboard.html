@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="/static/styles.css">
+    <title>Teacher Dashboard</title>
+</head>
+<body>
+
+    <div class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-links">
+                <a href="/teacher_dashboard" class="nav-link active">Dashboard</a>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Classes</a>
+                    <div class="dropdown-content">
+                        <a href="/manage_schedule">Manage Schedule</a>
+                        <a href="/mark_attendance">Mark Attendance</a>
+                        <a href="/enter_grades">Enter Grades</a>
+                        <a href="/manage_students">Enroll Students</a>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Assignments</a>
+                    <div class="dropdown-content">
+                        <a href="/add_assignment">Add Assignment</a>
+                        <a href="/manage_assignments">Manage Assignments</a>
+                        <a href="/teacher_reports">View Reports</a>
+                    </div>
+                </div>
+                <a href="/teacher_settings" class="nav-link">Settings</a>
+                <a href="/logout" class="nav-link">Logout</a>
+            </div>
+        </div>
+    </div>
+    <div class="center-wrapper">
+        <div class="dashboard-container card-3d" style="display:flex;flex-direction:column;align-items:center;">
+            <h1 style="width:100%;text-align:center;">Teacher Dashboard</h1>
+            <div class="subject-grid" style="justify-content:center;width:100%;">
+                <div class="subject-card">
+                    <div class="subject-grade">{{ students_count }}</div>
+                    <div class="subject-name">My Students</div>
+                </div>
+                <div class="subject-card">
+                    <div class="subject-grade">{{ active_assignments }}</div>
+                    <div class="subject-name">Active Assignments</div>
+                </div>
+                <div class="subject-card">
+                    <div class="subject-grade">{{ attendance_rate }}%</div>
+                    <div class="subject-name">Attendance Rate (This Week)</div>
+                </div>
+                <div class="subject-card">
+                    <div class="subject-grade">{{ average_grade|round(2) }}</div>
+                    <div class="subject-name">Average Grade (This Term)</div>
+                </div>
+            </div>
+            <!-- Quick actions removed in favor of navbar dropdowns -->
+            <h2 style="width:100%;text-align:center;">My Classes</h2>
+            <div class="table-wrapper" style="width:100%;display:flex;justify-content:center;">
+                <table style="margin:0 auto;">
+                    <thead>
+                        <tr>
+                            <th>Class</th>
+                            <th>Assignments</th>
+                            <th>Grades</th>
+                            <th>Attendance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cls in my_classes %}
+                        <tr>
+                            <td>{{ cls['name'] }}</td>
+                            <td><a class="link-btn" href="/manage_assignments">Manage</a></td>
+                            <td><a class="link-btn" href="/enter_grades">Manage</a></td>
+                            <td><a class="link-btn" href="/mark_attendance">Manage</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <h2 style="width:100%;text-align:center;">Recent Activity</h2>
+            <ul style="width:100%;text-align:center;list-style-position:inside;">
+                {% for act in recent_activity %}
+                <li>{{ act }}</li>
+                {% endfor %}
+            </ul>
+            <a class="btn-3d" href="/logout" style="margin-top:1em;align-self:center;">Logout</a>
+        </div>
+    </div>
+</body>
+</html>

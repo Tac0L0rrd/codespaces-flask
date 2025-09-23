@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="/static/styles.css">
+    <title>Add Assignment</title>
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-links">
+                <a href="/add_assignments" class="nav-link active">Add Assignments</a>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Classes</a>
+                    <div class="dropdown-content">
+                        <a href="/manage_schedule">Manage Schedule</a>
+                        <a href="/mark_attendance">Mark Attendance</a>
+                        <a href="/enter_grades">Enter Grades</a>
+                        <a href="/manage_students">Enroll Students</a>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Assignments</a>
+                    <div class="dropdown-content">
+                        <a href="/add_assignment">Add Assignment</a>
+                        <a href="/manage_assignments">Manage Assignments</a>
+                        <a href="/teacher_reports">View Reports</a>
+                    </div>
+                </div>
+                <a href="/teacher_settings" class="nav-link">Settings</a>
+                <a href="/logout" class="nav-link">Logout</a>
+            </div>
+        </div>
+    </div>
+    <div class="center-wrapper">
+        <div class="dashboard-container card-3d" style="display:flex;flex-direction:column;align-items:center;">
+            <h1 style="width:100%;text-align:center;">Add Assignment</h1>
+            <form method="POST" class="form-stack" style="width:100%;align-items:center;">
+                <label for="subject_id" style="width:100%;text-align:center;">Select Subject:</label>
+                <select name="subject_id" required style="max-width:350px;width:100%;">
+                    {% for cls in my_classes %}
+                    <option value="{{ cls['id'] }}">{{ cls['name'] }}</option>
+                    {% endfor %}
+                </select>
+                <label for="assignment_name" style="width:100%;text-align:center;">Assignment Name:</label>
+                <input type="text" name="assignment_name" required style="max-width:350px;width:100%;">
+                <button type="submit" class="btn-3d" style="align-self:center;">Add Assignment</button>
+            </form>
+            <a class="btn-3d" href="/teacher_dashboard" style="margin-top:1em;align-self:center;">Back to Dashboard</a>
+        </div>
+    </div>
+</body>
+</html>

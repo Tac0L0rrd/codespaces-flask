@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="/static/styles.css">
+    <title>Mark Attendance</title>
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-links">
+                <a href="/mark_attendance" class="nav-link active">Mark Attendance</a>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Classes</a>
+                    <div class="dropdown-content">
+                        <a href="/manage_schedule">Manage Schedule</a>
+                        <a href="/mark_attendance">Mark Attendance</a>
+                        <a href="/enter_grades">Enter Grades</a>
+                        <a href="/manage_students">Enroll Students</a>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Assignments</a>
+                    <div class="dropdown-content">
+                        <a href="/add_assignment">Add Assignment</a>
+                        <a href="/manage_assignments">Manage Assignments</a>
+                        <a href="/teacher_reports">View Reports</a>
+                    </div>
+                </div>
+                <a href="/teacher_settings" class="nav-link">Settings</a>
+                <a href="/logout" class="nav-link">Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="dashboard-container card-3d">
+            <h1>Mark Attendance</h1>
+            
+            <!-- Subject and Date Selection Form -->
+            <form method="GET" class="form-stack" style="margin-bottom: 2em;">
+                <div>
+                    <label for="subject_id">Select Subject:</label>
+                    <select name="subject_id" id="subject_id" onchange="this.form.submit()" required>
+                        <option value="" disabled {% if not selected_subject %}selected{% endif %}>Select Subject</option>
+                        {% for subject in subjects %}
+                        <option value="{{ subject['id'] }}" {% if selected_subject == subject['id']|string %}selected{% endif %}>
+                            {{ subject['name'] }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="date">Date:</label>
+                    <input type="date" name="date" id="date" value="{{ selected_date }}" onchange="this.form.submit()" required>
+                </div>
+            </form>
+
+            {% if attendance_data %}
+            <form method="POST" class="form-stack">
+                <input type="hidden" name="subject_id" value="{{ selected_subject }}">
+                <input type="hidden" name="date" value="{{ selected_date }}">
+                
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in attendance_data %}
+                            <tr>
+                                <td>{{ student['username'] }}</td>
+                                <td>
+                                    <select name="student_{{ student['student_id'] }}" required>
+                                        <option value="present" {% if student['present'] == 1 %}selected{% endif %}>Present</option>
+                                        <option value="absent" {% if student['present'] == 0 %}selected{% endif %}>Absent</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <button type="submit" class="btn-3d">Save Attendance</button>
+            </form>
+            {% elif selected_subject %}
+            <p>No students enrolled in this subject.</p>
+            {% endif %}
+
+            <div class="action-buttons">
+                <a href="/teacher_dashboard" class="btn-3d">Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

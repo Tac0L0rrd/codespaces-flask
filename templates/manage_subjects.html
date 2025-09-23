@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="/static/styles.css">
+    <title>Manage Subjects</title>
+</head>
+<body>
+    <div class="center-wrapper">
+        <div class="container card-3d">
+            <h1>Manage Subjects</h1>
+            <form method="post" action="/manage_subjects" class="form-stack">
+                <input type="text" name="subject_name" placeholder="New Subject Name" required>
+                <select name="teacher_id" required>
+                    <option value="">Select Teacher</option>
+                    {% for teacher in teachers %}
+                        <option value="{{ teacher['id'] }}">{{ teacher['username'] }}</option>
+                    {% endfor %}
+                </select>
+                <button class="btn-3d" type="submit">Create Subject</button>
+            </form>
+            <hr>
+            <h2>Subjects</h2>
+            <table border="1" cellpadding="10" cellspacing="0" style="width:100%; border-collapse: collapse; text-align:left;">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Teacher</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for subject in subjects %}
+                    <tr>
+                        <td>{{ subject['name'] }}</td>
+                        <td>{% if subject['teacher_name'] %}{{ subject['teacher_name'] }}{% else %}-{% endif %}</td>
+                        <td>
+                            <form method="post" action="/delete_subject" style="display:inline;">
+                                <input type="hidden" name="subject_id" value="{{ subject['id'] }}">
+                                <button class="btn-3d" type="submit" onclick="return confirm('Delete this subject?');">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <a class="btn-3d" href="/admin">Back to Dashboard</a>
+        </div>
+    </div>
+</body>
+</html>

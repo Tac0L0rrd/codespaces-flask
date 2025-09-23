@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="/static/styles.css">
+    <title>Teacher Settings</title>
+</head>
+<body>
+    
+   <div class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-links">
+                <a href="/teacher_settings" class="nav-link active">Settings</a>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Classes</a>
+                    <div class="dropdown-content">
+                        <a href="/manage_schedule">Manage Schedule</a>
+                        <a href="/mark_attendance">Mark Attendance</a>
+                        <a href="/enter_grades">Enter Grades</a>
+                        <a href="/manage_students">Enroll Students</a>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Assignments</a>
+                    <div class="dropdown-content">
+                        <a href="/add_assignment">Add Assignment</a>
+                        <a href="/manage_assignments">Manage Assignments</a>
+                        <a href="/teacher_reports">View Reports</a>
+                    </div>
+                </div>
+                <a href="/teacher_settings" class="nav-link">Settings</a>
+                <a href="/logout" class="nav-link">Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="center-wrapper">
+        <div class="container card-3d">
+            <h1>Teacher Settings</h1>
+
+            <form method="POST" class="form-stack">
+                <div>
+                    <label for="username">Username:</label>
+                    <input type="text" name="username" value="{{ username }}" required>
+                </div>
+
+                <div>
+                    <label for="password">Password (leave blank to keep current):</label>
+                    <input type="password" name="password">
+                </div>
+
+                <button class="btn-3d" type="submit">Save Changes</button>
+            </form>
+
+            <div class="action-buttons">
+                <a class="btn-3d" href="/teacher_dashboard">Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

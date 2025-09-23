@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="/static/styles.css">
+    <title>Enroll Students</title>
+</head>
+<body>
+    
+    <div class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-links">
+                <a href="/enroll_students" class="nav-link active">Enroll Students</a>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Classes</a>
+                    <div class="dropdown-content">
+                        <a href="/manage_schedule">Manage Schedule</a>
+                        <a href="/mark_attendance">Mark Attendance</a>
+                        <a href="/enter_grades">Enter Grades</a>
+                        <a href="/manage_students">Enroll Students</a>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Assignments</a>
+                    <div class="dropdown-content">
+                        <a href="/add_assignment">Add Assignment</a>
+                        <a href="/manage_assignments">Manage Assignments</a>
+                        <a href="/teacher_reports">View Reports</a>
+                    </div>
+                </div>
+                <a href="/teacher_settings" class="nav-link">Settings</a>
+                <a href="/logout" class="nav-link">Logout</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="center-wrapper">
+        <div class="dashboard-container card-3d" style="display:flex;flex-direction:column;align-items:center;">
+            <h1 style="width:100%;text-align:center;">Enroll Students in Your Subjects</h1>
+            {% for subject in subjects %}
+            <div class="subject-enroll-section" style="width:100%;text-align:center;align-items:center;margin-bottom:2em;">
+                <h2 style="width:100%;text-align:center;">{{ subject['name'] }}</h2>
+                <form method="post" action="/enroll_students" class="form-stack" style="width:100%;align-items:center;">
+                    <input type="hidden" name="subject_id" value="{{ subject['id'] }}">
+                    <label for="student_id" style="width:100%;text-align:center;">Add Student:</label>
+                    <select name="student_id" style="max-width:350px;width:100%;">
+                        {% for student in students %}
+                            <option value="{{ student['id'] }}">{{ student['username'] }}</option>
+                        {% endfor %}
+                    </select>
+                    <button class="btn-3d" type="submit" name="action" value="add" style="align-self:center;">Add</button>
+                </form>
+                <h3 style="width:100%;text-align:center;">Enrolled Students</h3>
+                <ul style="width:100%;text-align:center;list-style-position:inside;">
+                    {% for enrolled in subject['enrolled_students'] %}
+                    <li style="display:inline-block;width:100%;text-align:center;margin-bottom:0.5em;">
+                        {{ enrolled['username'] }}
+                        <form method="post" action="/enroll_students" style="display:inline;">
+                            <input type="hidden" name="subject_id" value="{{ subject['id'] }}">
+                            <input type="hidden" name="student_id" value="{{ enrolled['id'] }}">
+                            <button class="btn-3d" type="submit" name="action" value="remove" style="margin-left:1em;">Remove</button>
+                        </form>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <hr style="width:100%;">
+            {% endfor %}
+            <a class="btn-3d" href="/teacher_dashboard" style="margin-top:1em;align-self:center;">Back to Dashboard</a>
+        </div>
+    </div>
+</body>
+</html>

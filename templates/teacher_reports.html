@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="/static/styles.css">
+    <title>Teacher Reports</title>
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-links">
+                <a href="/teacher_reports" class="nav-link active">View Reports</a>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Classes</a>
+                    <div class="dropdown-content">
+                        <a href="/manage_schedule">Manage Schedule</a>
+                        <a href="/mark_attendance">Mark Attendance</a>
+                        <a href="/enter_grades">Enter Grades</a>
+                        <a href="/manage_students">Enroll Students</a>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Assignments</a>
+                    <div class="dropdown-content">
+                        <a href="/add_assignment">Add Assignment</a>
+                        <a href="/manage_assignments">Manage Assignments</a>
+                        <a href="/teacher_reports">View Reports</a>
+                    </div>
+                </div>
+                <a href="/teacher_settings" class="nav-link">Settings</a>
+                <a href="/logout" class="nav-link">Logout</a>
+            </div>
+        </div>
+    </div>
+<div class="center-wrapper">
+    <div class="dashboard-container card-3d">
+        <h1>Teacher Reports</h1>
+        <div class="subject-grid">
+            <div class="subject-card">
+                <div class="subject-grade">{{ total_students }}</div>
+                <div class="subject-name">Total Students</div>
+            </div>
+            <div class="subject-card">
+                <div class="subject-grade">{{ total_assignments }}</div>
+                <div class="subject-name">Total Assignments</div>
+            </div>
+            <div class="subject-card">
+                <div class="subject-grade">{{ average_grade|round(2) }}</div>
+                <div class="subject-name">Average Grade</div>
+            </div>
+        </div>
+        <h2>Class Reports</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Class</th>
+                    <th>Students</th>
+                    <th>Assignments</th>
+                    <th>Average Grade</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cls in class_reports %}
+                <tr>
+                    <td>{{ cls['name'] }}</td>
+                    <td>{{ cls['student_count'] }}</td>
+                    <td>{{ cls['assignment_count'] }}</td>
+                    <td>{{ cls['average_grade']|round(2) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <a class="btn-3d" href="/teacher_dashboard">Back to Dashboard</a>
+    </div>
+</div>
+</body>
+</html>

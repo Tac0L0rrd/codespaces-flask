@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="/static/styles.css">
+    <title>Subject Details</title>
+</head>
+<body>
+    <div class="center-wrapper">
+        <div class="container card-3d" style="max-width:500px;">
+            <h1>{{ subject }}</h1>
+            <h2>Assignments</h2>
+            <ul>
+                {% for asgn in assignments %}
+                    <li>{{ asgn.name }} - Grade: {{ asgn.grade }}</li>
+                {% else %}
+                    <li>No assignments yet.</li>
+                {% endfor %}
+            </ul>
+            <a class="btn-3d" href="/student">Back to Dashboard</a>
+        </div>
+    </div>
+</body>
+</html>
