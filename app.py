@@ -81,6 +81,81 @@ def is_student():
 def is_teacher():
     return session.get('role') == 'teacher'
 
+def init_demo_data():
+    """Initialize demo data for Vercel deployment"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # Check if data already exists
+    cursor.execute("SELECT COUNT(*) FROM users")
+    if cursor.fetchone()[0] > 0:
+        conn.close()
+        return  # Data already exists
+    
+    print("Initializing demo data for Vercel...")
+    
+    # Create demo users
+    cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", ('admin', 'admin123', 'admin'))
+    
+    # Teachers
+    teachers = [
+        ('mr_smith', 'Mathematics Teacher'),
+        ('ms_johnson', 'English Literature Teacher'), 
+        ('dr_brown', 'Science Teacher'),
+        ('ms_davis', 'History Teacher'),
+        ('mr_wilson', 'Physical Education Teacher')
+    ]
+    
+    for username, _ in teachers:
+        cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", (username, 'teacher123', 'teacher'))
+    
+    # Students
+    students = [
+        'alice_cooper', 'bob_johnson', 'charlie_brown', 'diana_prince',
+        'edward_cullen', 'fiona_green', 'george_lucas', 'hannah_montana',
+        'isaac_newton', 'julia_roberts', 'kevin_bacon', 'laura_croft'
+    ]
+    
+    for student in students:
+        cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", (student, 'student123', 'student'))
+    
+    # Create subjects
+    subjects_data = [
+        ('Mathematics', 2),  # mr_smith
+        ('English Literature', 3),  # ms_johnson  
+        ('Science', 4),  # dr_brown
+        ('History', 5),  # ms_davis
+        ('Physical Education', 6)  # mr_wilson
+    ]
+    
+    for subject_name, teacher_id in subjects_data:
+        cursor.execute("INSERT INTO subjects (name, teacher_id) VALUES (?, ?)", (subject_name, teacher_id))
+    
+    # Enroll students in subjects (first 8 students in all subjects)
+    for subject_id in range(1, 6):  # 5 subjects
+        for student_id in range(7, 15):  # Students 7-14 (alice_cooper onwards)
+            cursor.execute("INSERT INTO enrollments (user_id, subject_id) VALUES (?, ?)", (student_id, subject_id))
+    
+    # Create sample assignments with grades
+    import random
+    assignment_names = [
+        'Midterm Exam', 'Final Project', 'Quiz 1', 'Homework Assignment', 
+        'Lab Report', 'Essay Assignment', 'Group Project', 'Presentation'
+    ]
+    
+    for subject_id in range(1, 6):
+        for i, assignment_name in enumerate(assignment_names[:4]):  # 4 assignments per subject
+            for student_id in range(7, 15):  # Students with enrollments
+                grade = random.randint(70, 98)
+                cursor.execute("""
+                    INSERT INTO assignments (name, subject_id, user_id, grade, date_assigned) 
+                    VALUES (?, ?, ?, ?, ?)
+                """, (f"{assignment_name}", subject_id, student_id, grade, '2024-09-01'))
+    
+    conn.commit()
+    conn.close()
+    print("Demo data initialized successfully!")
+
 # --- Home Route ---
 @app.route('/')
 def home():
@@ -971,4 +1046,9 @@ def init_db():
 
 if __name__ == '__main__':
     init_db()
+    init_demo_data()  # Initialize demo data for Vercel
     app.run(debug=True)
+
+# Initialize demo data for production deployment (like Vercel)
+if not app.debug and os.environ.get('VERCEL'):
+    init_demo_data()
