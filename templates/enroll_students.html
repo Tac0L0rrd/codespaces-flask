@@ -34,38 +34,40 @@
     </div>
     
     <div class="center-wrapper">
-        <div class="dashboard-container card-3d" style="display:flex;flex-direction:column;align-items:center;">
-            <h1 style="width:100%;text-align:center;">Enroll Students in Your Subjects</h1>
+        <div class="dashboard-container card-3d">
+            <h1>Enroll Students in Your Subjects</h1>
             {% for subject in subjects %}
-            <div class="subject-enroll-section" style="width:100%;text-align:center;align-items:center;margin-bottom:2em;">
-                <h2 style="width:100%;text-align:center;">{{ subject['name'] }}</h2>
-                <form method="post" action="/enroll_students" class="form-stack" style="width:100%;align-items:center;">
+            <div class="subject-enroll-section" style="margin-bottom: 2em; width: 100%;">
+                <h2>{{ subject['name'] }}</h2>
+                <form method="post" action="/enroll_students" class="form-stack">
                     <input type="hidden" name="subject_id" value="{{ subject['id'] }}">
-                    <label for="student_id" style="width:100%;text-align:center;">Add Student:</label>
-                    <select name="student_id" style="max-width:350px;width:100%;">
+                    <label for="student_id">Add Student:</label>
+                    <select name="student_id">
                         {% for student in students %}
                             <option value="{{ student['id'] }}">{{ student['username'] }}</option>
                         {% endfor %}
                     </select>
-                    <button class="btn-3d" type="submit" name="action" value="add" style="align-self:center;">Add</button>
+                    <button class="btn-3d" type="submit" name="action" value="add">Add</button>
                 </form>
-                <h3 style="width:100%;text-align:center;">Enrolled Students</h3>
-                <ul style="width:100%;text-align:center;list-style-position:inside;">
+                <h3>Enrolled Students</h3>
+                <ul style="text-align: center; list-style-position: inside; padding-left: 0;">
                     {% for enrolled in subject['enrolled_students'] %}
-                    <li style="display:inline-block;width:100%;text-align:center;margin-bottom:0.5em;">
+                    <li style="margin-bottom: 0.5em;">
                         {{ enrolled['username'] }}
-                        <form method="post" action="/enroll_students" style="display:inline;">
+                        <form method="post" action="/enroll_students" style="display: inline; margin-left: 1em;">
                             <input type="hidden" name="subject_id" value="{{ subject['id'] }}">
                             <input type="hidden" name="student_id" value="{{ enrolled['id'] }}">
-                            <button class="btn-3d" type="submit" name="action" value="remove" style="margin-left:1em;">Remove</button>
+                            <button class="btn-3d" type="submit" name="action" value="remove">Remove</button>
                         </form>
                     </li>
                     {% endfor %}
                 </ul>
             </div>
-            <hr style="width:100%;">
+            <hr style="width: 100%; margin: 2em 0; border: 1px solid #C0392B;">
             {% endfor %}
-            <a class="btn-3d" href="/teacher_dashboard" style="margin-top:1em;align-self:center;">Back to Dashboard</a>
+            <div class="action-buttons">
+                <a class="btn-3d" href="/teacher_dashboard">Back to Dashboard</a>
+            </div>
         </div>
     </div>
 </body>

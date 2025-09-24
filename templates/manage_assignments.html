@@ -48,17 +48,20 @@
                         <tr>
                             <td>{{ assignment['subject_name'] }}</td>
                             <td>{{ assignment['name'] }}</td>
-                            <td>
+                            <td class="table-actions">
                                 <form method="POST" style="display: inline;">
                                     <input type="hidden" name="assignment_id" value="{{ assignment['id'] }}">
                                     <input type="hidden" name="action" value="delete">
-                                    <button type="submit" class="btn-3d" style="padding: 0.5em 1em; font-size: 0.9em;">Delete</button>
+                                    <button type="submit" class="btn-3d">Delete</button>
                                 </form>
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
+            <div class="action-buttons">
+                <a class="btn-3d" href="/teacher_dashboard">Back to Dashboard</a>
             </div>
         </div>
     </div>

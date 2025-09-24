@@ -32,28 +32,24 @@
         </div>
     </div>
 
-    <div class="container">
+    <div class="center-wrapper">
         <div class="dashboard-container card-3d">
             <h1>Mark Attendance</h1>
             
             <!-- Subject and Date Selection Form -->
-            <form method="GET" class="form-stack" style="margin-bottom: 2em;">
-                <div>
-                    <label for="subject_id">Select Subject:</label>
-                    <select name="subject_id" id="subject_id" onchange="this.form.submit()" required>
-                        <option value="" disabled {% if not selected_subject %}selected{% endif %}>Select Subject</option>
-                        {% for subject in subjects %}
-                        <option value="{{ subject['id'] }}" {% if selected_subject == subject['id']|string %}selected{% endif %}>
-                            {{ subject['name'] }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
+            <form method="GET" class="form-stack">
+                <label for="subject_id">Select Subject:</label>
+                <select name="subject_id" id="subject_id" onchange="this.form.submit()" required>
+                    <option value="" disabled {% if not selected_subject %}selected{% endif %}>Select Subject</option>
+                    {% for subject in subjects %}
+                    <option value="{{ subject['id'] }}" {% if selected_subject == subject['id']|string %}selected{% endif %}>
+                        {{ subject['name'] }}
+                    </option>
+                    {% endfor %}
+                </select>
                 
-                <div>
-                    <label for="date">Date:</label>
-                    <input type="date" name="date" id="date" value="{{ selected_date }}" onchange="this.form.submit()" required>
-                </div>
+                <label for="date">Date:</label>
+                <input type="date" name="date" id="date" value="{{ selected_date }}" onchange="this.form.submit()" required>
             </form>
 
             {% if attendance_data %}

@@ -5,7 +5,7 @@ from datetime import datetime, date
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
-DATABASE = 'school.db'
+DATABASE = os.path.join(os.path.dirname(__file__), 'school.db')
 
 # --- Helper Functions ---
 def get_db():
@@ -147,6 +147,7 @@ def manage_users():
         return redirect(url_for('login'))
     conn = get_db()
     cur = conn.cursor()
+    cur.execute("SELECT * FROM users")
     
     if request.method == 'POST':
         username = request.form['username']
@@ -178,6 +179,7 @@ def manage_users():
 def delete_user():
     if not is_admin():
         return redirect(url_for('login'))
+    
     user_id = request.form['user_id']
     conn = get_db()
     cur = conn.cursor()
@@ -195,11 +197,14 @@ def manage_subjects():
         return redirect(url_for('login'))
     conn = get_db()
     cur = conn.cursor()
+    
     if request.method == 'POST':
         subject_name = request.form['subject_name']
         teacher_id = request.form.get('teacher_id')
         cur.execute("INSERT INTO subjects (name, teacher_id) VALUES (?, ?)", (subject_name, teacher_id))
         conn.commit()
+
+    # Get all subjects
     cur.execute('''SELECT subjects.*, users.username as teacher_name 
                    FROM subjects 
                    LEFT JOIN users ON subjects.teacher_id = users.id''')
@@ -212,9 +217,12 @@ def manage_subjects():
 def delete_subject():
     if not is_admin():
         return redirect(url_for('login'))
+    
     subject_id = request.form['subject_id']
     conn = get_db()
     cur = conn.cursor()
+    
+    # Proceed with deletion
     cur.execute("DELETE FROM subjects WHERE id=?", (subject_id,))
     cur.execute("DELETE FROM assignments WHERE subject_id=?", (subject_id,))
     cur.execute("DELETE FROM enrollments WHERE subject_id=?", (subject_id,))
@@ -300,29 +308,35 @@ def manage_assignments():
 
 @app.route('/delete_assignment', methods=['POST'])
 def delete_assignment():
-    if not is_admin():
+    if not (is_admin() or is_teacher()):
         return redirect(url_for('login'))
+    
     assignment_id = request.form['assignment_id']
     conn = get_db()
     cur = conn.cursor()
+    
+    # Proceed with deletion
     cur.execute("DELETE FROM assignments WHERE id=?", (assignment_id,))
     conn.commit()
     return redirect(url_for('manage_assignments'))
 
 @app.route('/edit_grade', methods=['POST'])
 def edit_grade():
-    if not is_admin():
+    if not (is_admin() or is_teacher()):
         return redirect(url_for('login'))
+    
     assignment_id = request.form['assignment_id']
     grade = request.form['grade']
     conn = get_db()
     cur = conn.cursor()
+    
+    # Proceed with grade update
     cur.execute("UPDATE assignments SET grade=? WHERE id=?", (grade, assignment_id))
     conn.commit()
     return redirect(url_for('manage_assignments'))
 
 # --- Student Dashboard ---
-@app.route('/student')
+@app.route('/student_dashboard')
 def student_dashboard():
     if not is_student():
         return redirect(url_for('login'))
@@ -333,13 +347,13 @@ def student_dashboard():
 
     # Get subjects the student is enrolled in
     cur.execute('''SELECT DISTINCT 
-                   subjects.id, 
-                   subjects.name,
-                   users.username as teacher_name
-                   FROM subjects
-                   JOIN enrollments ON subjects.id = enrollments.subject_id
-                   LEFT JOIN users ON subjects.teacher_id = users.id
-                   WHERE enrollments.user_id = ?''', (user_id,))
+                subjects.id, 
+                subjects.name,
+                users.username as teacher_name
+                FROM subjects
+                JOIN enrollments ON subjects.id = enrollments.subject_id
+                LEFT JOIN users ON subjects.teacher_id = users.id
+                WHERE enrollments.user_id = ?''', (user_id,))
     subjects = cur.fetchall()
 
     subject_grades = []
@@ -819,33 +833,43 @@ def teacher_reports():
     conn = get_db()
     cur = conn.cursor()
 
+    # Get total students in teacher's subjects
     cur.execute('''SELECT COUNT(DISTINCT enrollments.user_id) AS total_students
                    FROM enrollments
-                   JOIN assignments ON enrollments.subject_id = assignments.subject_id
-                   WHERE assignments.user_id=?''', (user_id,))
+                   JOIN subjects ON enrollments.subject_id = subjects.id
+                   WHERE subjects.teacher_id=?''', (user_id,))
     total_students = cur.fetchone()['total_students'] or 0
 
-    cur.execute("SELECT COUNT(*) AS total_assignments FROM assignments WHERE user_id=?", (user_id,))
+    # Get total assignments in teacher's subjects
+    cur.execute('''SELECT COUNT(*) AS total_assignments 
+                   FROM assignments 
+                   JOIN subjects ON assignments.subject_id = subjects.id
+                   WHERE subjects.teacher_id=?''', (user_id,))
     total_assignments = cur.fetchone()['total_assignments'] or 0
 
-    cur.execute("SELECT AVG(grade) AS avg_grade FROM assignments WHERE user_id=?", (user_id,))
+    # Get average grade in teacher's subjects
+    cur.execute('''SELECT AVG(grade) AS avg_grade 
+                   FROM assignments 
+                   JOIN subjects ON assignments.subject_id = subjects.id
+                   WHERE subjects.teacher_id=? AND grade IS NOT NULL AND grade > 0''', (user_id,))
     average_grade = cur.fetchone()['avg_grade'] or 0
 
+    # Get detailed reports for each subject taught by this teacher
     cur.execute('''SELECT subjects.id, subjects.name,
                           COUNT(DISTINCT enrollments.user_id) AS student_count,
                           COUNT(assignments.id) AS assignment_count,
-                          AVG(assignments.grade) AS average_grade
+                          AVG(CASE WHEN assignments.grade > 0 THEN assignments.grade END) AS average_grade
                    FROM subjects
                    LEFT JOIN enrollments ON subjects.id = enrollments.subject_id
-                   LEFT JOIN assignments ON subjects.id = assignments.subject_id AND assignments.user_id=?
-                   WHERE subjects.id IN (SELECT DISTINCT assignments.subject_id FROM assignments WHERE assignments.user_id=?)
-                   GROUP BY subjects.id''', (user_id, user_id))
+                   LEFT JOIN assignments ON subjects.id = assignments.subject_id
+                   WHERE subjects.teacher_id=?
+                   GROUP BY subjects.id''', (user_id,))
     class_reports = cur.fetchall()
 
     return render_template('teacher_reports.html',
                            total_students=total_students,
                            total_assignments=total_assignments,
-                           average_grade=average_grade,
+                           average_grade=round(average_grade, 1) if average_grade else 0,
                            class_reports=class_reports)
 
 # --- Manage Schedule ---
@@ -929,19 +953,21 @@ def manage_schedule():
                          days=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
                          periods=range(1, 9))
 
-# --- Initialize DB ---
+# --- Initialize Database ---
 def init_db():
     if not os.path.exists(DATABASE):
         conn = sqlite3.connect(DATABASE)
         cur = conn.cursor()
-        cur.execute('''CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, password TEXT, role TEXT)''')
-        cur.execute('''CREATE TABLE subjects (id INTEGER PRIMARY KEY, name TEXT)''')
+        cur.execute('''CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT UNIQUE, password TEXT, role TEXT)''')
+        cur.execute('''CREATE TABLE subjects (id INTEGER PRIMARY KEY, name TEXT, teacher_id INTEGER REFERENCES users(id))''')
         cur.execute('''CREATE TABLE assignments (id INTEGER PRIMARY KEY, name TEXT, grade REAL, subject_id INTEGER, user_id INTEGER)''')
         cur.execute('''CREATE TABLE enrollments (user_id INTEGER, subject_id INTEGER)''')
         cur.execute('''CREATE TABLE schedule (user_id INTEGER, subject_id INTEGER, day TEXT, period INTEGER)''')
         cur.execute('''CREATE TABLE attendance (id INTEGER PRIMARY KEY, user_id INTEGER, subject_id INTEGER, date TEXT, present INTEGER)''')
         conn.commit()
         conn.close()
+
+    pass
 
 if __name__ == '__main__':
     init_db()

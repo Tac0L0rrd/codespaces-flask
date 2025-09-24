@@ -32,7 +32,7 @@
         </div>
     </div>
 
-    <div class="container">
+    <div class="center-wrapper">
         <div class="dashboard-container card-3d">
             <h1>Manage Schedule</h1>
             
@@ -87,7 +87,7 @@
                             <td>{{ sched['subject_name'] }}</td>
                             <td>{{ sched['day'] }}</td>
                             <td>{{ sched['period'] }}</td>
-                            <td>
+                            <td class="table-actions">
                                 <form method="POST" style="display: inline;">
                                     <input type="hidden" name="action" value="delete">
                                     <input type="hidden" name="schedule_id" value="{{ sched['id'] }}">

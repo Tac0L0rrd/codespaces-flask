@@ -33,9 +33,9 @@
         </div>
     </div>
     <div class="center-wrapper">
-        <div class="dashboard-container card-3d" style="display:flex;flex-direction:column;align-items:center;">
-            <h1 style="width:100%;text-align:center;">Teacher Dashboard</h1>
-            <div class="subject-grid" style="justify-content:center;width:100%;">
+        <div class="dashboard-container card-3d">
+            <h1>Teacher Dashboard</h1>
+            <div class="subject-grid">
                 <div class="subject-card">
                     <div class="subject-grade">{{ students_count }}</div>
                     <div class="subject-name">My Students</div>
@@ -54,9 +54,9 @@
                 </div>
             </div>
             <!-- Quick actions removed in favor of navbar dropdowns -->
-            <h2 style="width:100%;text-align:center;">My Classes</h2>
-            <div class="table-wrapper" style="width:100%;display:flex;justify-content:center;">
-                <table style="margin:0 auto;">
+            <h2>My Classes</h2>
+            <div class="table-wrapper">
+                <table>
                     <thead>
                         <tr>
                             <th>Class</th>
@@ -77,13 +77,15 @@
                     </tbody>
                 </table>
             </div>
-            <h2 style="width:100%;text-align:center;">Recent Activity</h2>
-            <ul style="width:100%;text-align:center;list-style-position:inside;">
+            <h2>Recent Activity</h2>
+            <ul style="text-align:center;list-style-position:inside;padding-left:0;">
                 {% for act in recent_activity %}
                 <li>{{ act }}</li>
                 {% endfor %}
             </ul>
-            <a class="btn-3d" href="/logout" style="margin-top:1em;align-self:center;">Logout</a>
+            <div class="action-buttons">
+                <a class="btn-3d" href="/logout">Logout</a>
+            </div>
         </div>
     </div>
 </body>

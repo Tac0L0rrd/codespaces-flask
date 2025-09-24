@@ -34,19 +34,15 @@
     </div>
 
     <div class="center-wrapper">
-        <div class="container card-3d">
+        <div class="dashboard-container card-3d">
             <h1>Teacher Settings</h1>
 
             <form method="POST" class="form-stack">
-                <div>
-                    <label for="username">Username:</label>
-                    <input type="text" name="username" value="{{ username }}" required>
-                </div>
+                <label for="username">Username:</label>
+                <input type="text" name="username" value="{{ username }}" required>
 
-                <div>
-                    <label for="password">Password (leave blank to keep current):</label>
-                    <input type="password" name="password">
-                </div>
+                <label for="password">Password (leave blank to keep current):</label>
+                <input type="password" name="password">
 
                 <button class="btn-3d" type="submit">Save Changes</button>
             </form>

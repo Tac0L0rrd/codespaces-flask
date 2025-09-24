@@ -6,17 +6,22 @@
 </head>
 <body>
     <div class="center-wrapper">
-        <div class="container card-3d" style="max-width:500px;">
+        <div class="dashboard-container card-3d">
             <h1>{{ subject }}</h1>
             <h2>Assignments</h2>
-            <ul>
+            <div class="assignments-list">
                 {% for asgn in assignments %}
-                    <li>{{ asgn.name }} - Grade: {{ asgn.grade }}</li>
+                    <div class="assignment-item">
+                        <div class="assignment-name">{{ asgn.name }}</div>
+                        <div class="assignment-grade">Grade: {{ asgn.grade if asgn.grade and asgn.grade > 0 else 'Not graded yet' }}</div>
+                    </div>
                 {% else %}
-                    <li>No assignments yet.</li>
+                    <div class="no-assignments">No assignments yet.</div>
                 {% endfor %}
-            </ul>
-            <a class="btn-3d" href="/student">Back to Dashboard</a>
+            </div>
+            <div class="action-buttons">
+                <a class="btn-3d" href="/student_dashboard">Back to Dashboard</a>
+            </div>
         </div>
     </div>
 </body>

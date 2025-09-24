@@ -41,7 +41,7 @@
     </div>
 
     <div class="center-wrapper">
-        <div class="container card-3d" style="max-width: 1000px;">
+        <div class="dashboard-container card-3d">
             <h1>Enter Grades</h1>
             
             {% for subject in subjects %}
@@ -111,7 +111,9 @@
             </div>
             {% endfor %}
             
-            <a class="btn-3d" href="/teacher_dashboard">Back to Dashboard</a>
+            <div class="action-buttons">
+                <a class="btn-3d" href="/teacher_dashboard">Back to Dashboard</a>
+            </div>
         </div>
     </div>
 </body>

@@ -6,7 +6,7 @@
 </head>
 <body>
     <div class="center-wrapper">
-        <div class="container card-3d">
+                <div class="dashboard-container card-3d">
             <h1>Manage Subjects</h1>
             <form method="post" action="/manage_subjects" class="form-stack">
                 <input type="text" name="subject_name" placeholder="New Subject Name" required>
@@ -18,32 +18,36 @@
                 </select>
                 <button class="btn-3d" type="submit">Create Subject</button>
             </form>
-            <hr>
+            <hr style="width:100%; margin: 2em 0; border: 1px solid #C0392B;">
             <h2>Subjects</h2>
-            <table border="1" cellpadding="10" cellspacing="0" style="width:100%; border-collapse: collapse; text-align:left;">
-                <thead>
-                    <tr>
-                        <th>Subject</th>
-                        <th>Teacher</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for subject in subjects %}
-                    <tr>
-                        <td>{{ subject['name'] }}</td>
-                        <td>{% if subject['teacher_name'] %}{{ subject['teacher_name'] }}{% else %}-{% endif %}</td>
-                        <td>
-                            <form method="post" action="/delete_subject" style="display:inline;">
-                                <input type="hidden" name="subject_id" value="{{ subject['id'] }}">
-                                <button class="btn-3d" type="submit" onclick="return confirm('Delete this subject?');">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            <a class="btn-3d" href="/admin">Back to Dashboard</a>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Teacher</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subject in subjects %}
+                        <tr>
+                            <td>{{ subject['name'] }}</td>
+                            <td>{% if subject['teacher_name'] %}{{ subject['teacher_name'] }}{% else %}-{% endif %}</td>
+                            <td class="table-actions">
+                                <form method="post" action="/delete_subject" style="display:inline;">
+                                    <input type="hidden" name="subject_id" value="{{ subject['id'] }}">
+                                    <button class="btn-3d" type="submit" onclick="return confirm('Delete this subject?');">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="action-buttons">
+                <a class="btn-3d" href="/admin">Back to Dashboard</a>
+            </div>
         </div>
     </div>
 </body>
