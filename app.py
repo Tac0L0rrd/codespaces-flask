@@ -94,8 +94,9 @@ def init_demo_data():
     
     print("Initializing demo data for Vercel...")
     
-    # Create demo users
-    cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", ('admin', 'admin123', 'admin'))
+    # Create admin users
+    cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", ('admin', 'admin123', 'admin'))  # Demo admin
+    cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", ('Admin', '2009', 'admin'))      # Real admin
     
     # Teachers
     teachers = [
