@@ -9,7 +9,7 @@ A comprehensive Flask-based school management system featuring role-based access
 
 ## 🌟 Live Demo
 
-**🔗 [Try EduBridge Live](https://your-vercel-deployment.vercel.app)**
+**🔗 [Try EduBridge Live](https://edubridge-pi.vercel.app)**
 
 Use these demo accounts to explore the system:
 
