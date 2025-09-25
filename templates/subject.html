@@ -7,22 +7,52 @@
     <title>Subject Details - EduBridge</title>
 </head>
 <body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-links">
+                <a href="/student_dashboard" class="nav-link">Dashboard</a>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger active">Academic</a>
+                    <div class="dropdown-content">
+                        <a href="/student_progress">View Progress</a>
+                        <a href="/student_attendance">View Attendance</a>
+                    </div>
+                </div>
+                <a href="/logout" class="nav-link">Logout</a>
+            </div>
+        </div>
+    </div>
+
     <div class="center-wrapper">
         <div class="dashboard-container card-3d">
-                        <h1>{{ subject.name }}</h1>
+            <h1>{{ subject }}</h1>
             <h2>Assignments</h2>
-            <div class="assignments-list">
-                {% for asgn in assignments %}
-                    <div class="assignment-item">
-                        <div class="assignment-name">{{ asgn.name }}</div>
-                        <div class="assignment-grade">Grade: {{ asgn.grade if asgn.grade and asgn.grade > 0 else 'Not graded yet' }}</div>
-                    </div>
-                {% else %}
-                    <div class="no-assignments">No assignments yet.</div>
-                {% endfor %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Assignment Name</th>
+                            <th>Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for asgn in assignments %}
+                        <tr>
+                            <td>{{ asgn.name }}</td>
+                            <td>{{ asgn.grade if asgn.grade and asgn.grade > 0 else 'Not graded yet' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="2" style="text-align: center; color: rgba(255,255,255,0.6); padding: 20px;">
+                                No assignments yet.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
             <div class="action-buttons">
-                <a class="btn-3d" href="/student_dashboard">Back to Dashboard</a>
+                <a class="btn-3d" href="/student_dashboard">← Back to Dashboard</a>
             </div>
         </div>
     </div>

@@ -497,11 +497,12 @@ def student_attendance():
     # Get attendance statistics by subject
     cur.execute('''SELECT subjects.name as subject_name,
                           COUNT(*) as total_classes,
-                          SUM(present) as classes_present
+                          SUM(present) as classes_present,
+                          ROUND(AVG(CAST(present AS FLOAT)) * 100, 1) as attendance_rate
                    FROM attendance
                    JOIN subjects ON attendance.subject_id = subjects.id
                    WHERE attendance.user_id = ?
-                   GROUP BY subjects.id''', (user_id,))
+                   GROUP BY subjects.id, subjects.name''', (user_id,))
     subject_attendance = cur.fetchall()
     
     return render_template('student_attendance.html',

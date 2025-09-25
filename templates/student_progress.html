@@ -5,81 +5,9 @@
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <link rel="stylesheet" href="/static/styles.css">
     <title>Academic Progress - EduBridge</title>
-    <style>
-        .progress-section {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .progress-bar {
-            width: 100%;
-            height: 25px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 15px;
-            overflow: hidden;
-            margin: 10px 0;
-        }
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #C0392B, #E74C3C);
-            border-radius: 15px;
-            transition: width 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            min-width: 40px;
-        }
-        .grade-chart {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-        .grade-item {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        .grade-value {
-            font-size: 2em;
-            font-weight: bold;
-            color: #C0392B;
-        }
-        .attendance-chart {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-        .attendance-circle {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background: conic-gradient(#C0392B 0deg, #C0392B var(--percentage), rgba(255,255,255,0.2) var(--percentage), rgba(255,255,255,0.2) 360deg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 1.2em;
-        }
-        .trend-indicator {
-            display: inline-block;
-            margin-left: 10px;
-            font-size: 1.2em;
-        }
-        .trend-up { color: #2ECC71; }
-        .trend-down { color: #E74C3C; }
-        .trend-neutral { color: #F39C12; }
-    </style>
 </head>
 <body>
-        <div class="navbar">
+    <div class="navbar">
         <div class="navbar-container">
             <div class="navbar-links">
                 <a href="/student_dashboard" class="nav-link">Dashboard</a>
@@ -97,7 +25,7 @@
 
     <div class="center-wrapper">
         <div class="dashboard-container card-3d">
-            <h1>📈 Academic Progress Tracking</h1>
+            <h1>Academic Progress Tracking</h1>
 
             <div class="table-wrapper">
                 <h3>Overall Performance</h3>
@@ -125,44 +53,6 @@
                                 {% endif %}
                             </td>
                         </tr>
-                        <tr>
-                            <td><strong>Recent Average</strong></td>
-                            <td>{{ avg_recent_grade|round(1) }}%</td>
-                            <td>Last 10 assignments</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Improvement</strong></td>
-                            <td>{{ improvement_percentage|round(1) }}%</td>
-                            <td>
-                                {% if improvement_percentage > 0 %}
-                                    <span style="color: #2ECC71;">📈 Improving</span>
-                                {% elif improvement_percentage < -2 %}
-                                    <span style="color: #E74C3C;">📉 Declining</span>
-                                {% else %}
-                                    <span style="color: #F39C12;">➡️ Stable</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Recent Assignments</strong></td>
-                            <td>{{ recent_assignments_count }}</td>
-                            <td>Last 30 days</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Overall Attendance</strong></td>
-                            <td>{{ overall_attendance|round(1) }}%</td>
-                            <td>
-                                {% if overall_attendance >= 95 %}
-                                    <span style="color: #2ECC71;">🌟 Excellent</span>
-                                {% elif overall_attendance >= 85 %}
-                                    <span style="color: #F39C12;">👍 Good</span>
-                                {% elif overall_attendance >= 75 %}
-                                    <span style="color: #E67E22;">⚠️ Fair</span>
-                                {% else %}
-                                    <span style="color: #E74C3C;">📢 Needs Improvement</span>
-                                {% endif %}
-                            </td>
-                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -175,7 +65,6 @@
                             <th>Subject</th>
                             <th>Teacher</th>
                             <th>Average Grade</th>
-                            <th>Assignments</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -185,7 +74,6 @@
                             <td>{{ subject.subject }}</td>
                             <td>{{ subject.teacher or 'Not Assigned' }}</td>
                             <td>{{ subject.avg_grade|round(1) }}%</td>
-                            <td>{{ subject.assignments|length }}</td>
                             <td>
                                 {% if subject.avg_grade >= 90 %}
                                     <span style="color: #2ECC71;">🟢 Excellent</span>

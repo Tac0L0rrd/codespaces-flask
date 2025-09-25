@@ -11,26 +11,6 @@
         th { background-color: rgba(255, 255, 255, 0.1); color: white; }
         .grade-input { width: 100px; padding: 5px; text-align: center; }
         .subject-section { margin-bottom: 30px; }
-        .grading-info {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .grade-display {
-            font-weight: bold;
-            color: #2ECC71;
-            margin-right: 10px;
-        }
-        .assignment-item {
-            display: inline-block;
-            margin-right: 15px;
-            margin-bottom: 10px;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 10px;
-            border-radius: 5px;
-        }
     </style>
 </head>
 <body>
@@ -39,7 +19,6 @@
         <div class="navbar-container">
             <div class="navbar-links">
                 <a href="/teacher_dashboard" class="nav-link">Dashboard</a>
-                <a href="/teacher_analytics" class="nav-link">Analytics</a>
                 <div class="dropdown">
                     <a href="#" class="nav-link dropdown-trigger active">Classes</a>
                     <div class="dropdown-content">
@@ -54,6 +33,12 @@
                     <div class="dropdown-content">
                         <a href="/add_assignment">Add Assignment</a>
                         <a href="/manage_assignments">Manage Assignments</a>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Analytics</a>
+                    <div class="dropdown-content">
+                        <a href="/teacher_analytics">View Analytics</a>
                         <a href="/teacher_reports">View Reports</a>
                     </div>
                 </div>
@@ -66,181 +51,76 @@
     <div class="center-wrapper">
         <div class="dashboard-container card-3d">
             <h1>Enter Grades</h1>
-            
-            <!-- Flash Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        {% if category == 'success' %}
-                            <div class="success-message" style="background: rgba(46, 204, 113, 0.2); border: 1px solid #2ECC71; color: white; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
-                                {{ message }}
-                            </div>
-                        {% else %}
-                            <div class="error-message" style="background: rgba(231, 76, 60, 0.2); border: 1px solid #E74C3C; color: white; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
-                                {{ message }}
-                            </div>
-                        {% endif %}
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-
-            <!-- Grading System Info -->
-            <div class="grading-info">
-                <h3>Current Grading System: 
-                    {% if grading_scale == 'letter' %}
-                        Letter Grades (A+ to F)
-                    {% elif grading_scale == 'gpa' %}
-                        GPA Scale (0.0 - 4.0)
-                    {% else %}
-                        Percentage (0% - 100%)
-                    {% endif %}
-                </h3>
-                <p>Enter grades in the current system format. All grades are automatically converted for consistent storage and reporting.</p>
-            </div>
 
             {% for subject in subjects %}
-                {% set filtered_assignments = students_assignments|selectattr('subject_name', 'equalto', subject['name']) %}
-                {% if filtered_assignments %}
-                    <div class="subject-section">
-                        <h3>{{ subject['name'] }}</h3>
-                        
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Student</th>
-                                    <th>Current Assignments & Grades</th>
-                                    <th>Add New Assignment</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% set ns = namespace(last_student="", student_assignments=[]) %}
-                                {% for item in filtered_assignments %}
-                                    {% if item['student_name'] != ns.last_student %}
-                                        {% if ns.last_student != "" %}
-                                            </td>
-                                            <td>
-                                                <form method="post" style="display: inline;">
-                                                    <input type="hidden" name="student_id" value="{{ ns.student_assignments[-1]['student_id'] }}">
-                                                    <input type="hidden" name="subject_id" value="{{ subject['id'] }}">
-                                                    <input type="text" name="assignment_name" placeholder="Assignment name" style="width: 120px; margin-bottom: 5px;" required>
-                                                    <br>
-                                                    {% if grading_scale == 'letter' %}
-                                                        <select name="grade" class="grade-input" required>
-                                                            <option value="">Select Grade</option>
-                                                            <option value="A+">A+</option>
-                                                            <option value="A">A</option>
-                                                            <option value="A-">A-</option>
-                                                            <option value="B+">B+</option>
-                                                            <option value="B">B</option>
-                                                            <option value="B-">B-</option>
-                                                            <option value="C+">C+</option>
-                                                            <option value="C">C</option>
-                                                            <option value="C-">C-</option>
-                                                            <option value="D+">D+</option>
-                                                            <option value="D">D</option>
-                                                            <option value="D-">D-</option>
-                                                            <option value="F">F</option>
-                                                        </select>
-                                                    {% elif grading_scale == 'gpa' %}
-                                                        <input type="number" name="grade" placeholder="GPA" class="grade-input" min="0" max="4.0" step="0.1" required>
-                                                    {% else %}
-                                                        <input type="number" name="grade" placeholder="%" class="grade-input" min="0" max="100" step="0.1" required>
-                                                    {% endif %}
-                                                    <button type="submit" class="btn-3d" style="margin-left: 5px;">Add</button>
-                                                </form>
-                                            </td>
-                                            </tr>
-                                        {% endif %}
-                                        <tr>
-                                            <td><strong>{{ item['student_name'] }}</strong></td>
-                                            <td>
-                                        {% set ns.student_assignments = [item] %}
-                                    {% else %}
-                                        {% set _ = ns.student_assignments.append(item) %}
-                                    {% endif %}
+            <div class="subject-section">
+                <h2>{{ subject['name'] }}</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Assignments & Grades</th>
+                            <th>Add New Assignment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set filtered_assignments = students_assignments|selectattr('subject_name', 'equalto', subject['name'])|list %}
+                        {% set ns = namespace(last_student='') %}
 
-                                    {% if item['assignment_name'] %}
-                                        <div class="assignment-item">
-                                            <form method="post" style="display: inline;">
-                                                <input type="hidden" name="assignment_id" value="{{ item['assignment_id'] }}">
-                                                <input type="hidden" name="student_id" value="{{ item['student_id'] }}">
-                                                <input type="hidden" name="subject_id" value="{{ subject['id'] }}">
-                                                <strong>{{ item['assignment_name'] }}:</strong>
-                                                <span class="grade-display">{{ format_grade(item['grade'], grading_scale) }}</span>
-                                                <br>
-                                                {% if grading_scale == 'letter' %}
-                                                    <select name="grade" class="grade-input">
-                                                        <option value="A+" {% if format_grade(item['grade'], 'letter') == 'A+' %}selected{% endif %}>A+</option>
-                                                        <option value="A" {% if format_grade(item['grade'], 'letter') == 'A' %}selected{% endif %}>A</option>
-                                                        <option value="A-" {% if format_grade(item['grade'], 'letter') == 'A-' %}selected{% endif %}>A-</option>
-                                                        <option value="B+" {% if format_grade(item['grade'], 'letter') == 'B+' %}selected{% endif %}>B+</option>
-                                                        <option value="B" {% if format_grade(item['grade'], 'letter') == 'B' %}selected{% endif %}>B</option>
-                                                        <option value="B-" {% if format_grade(item['grade'], 'letter') == 'B-' %}selected{% endif %}>B-</option>
-                                                        <option value="C+" {% if format_grade(item['grade'], 'letter') == 'C+' %}selected{% endif %}>C+</option>
-                                                        <option value="C" {% if format_grade(item['grade'], 'letter') == 'C' %}selected{% endif %}>C</option>
-                                                        <option value="C-" {% if format_grade(item['grade'], 'letter') == 'C-' %}selected{% endif %}>C-</option>
-                                                        <option value="D+" {% if format_grade(item['grade'], 'letter') == 'D+' %}selected{% endif %}>D+</option>
-                                                        <option value="D" {% if format_grade(item['grade'], 'letter') == 'D' %}selected{% endif %}>D</option>
-                                                        <option value="D-" {% if format_grade(item['grade'], 'letter') == 'D-' %}selected{% endif %}>D-</option>
-                                                        <option value="F" {% if format_grade(item['grade'], 'letter') == 'F' %}selected{% endif %}>F</option>
-                                                    </select>
-                                                {% elif grading_scale == 'gpa' %}
-                                                    <input type="number" name="grade" value="{{ format_grade(item['grade'], 'gpa').rstrip('0').rstrip('.') }}" class="grade-input" min="0" max="4.0" step="0.1">
-                                                {% else %}
-                                                    <input type="number" name="grade" value="{{ item['grade'] or '' }}" class="grade-input" min="0" max="100" step="0.1">
-                                                {% endif %}
-                                                <button type="submit" class="btn-3d" style="margin-left: 5px;">Update</button>
-                                            </form>
-                                        </div>
-                                    {% endif %}
-
-                                    {% set ns.last_student = item['student_name'] %}
-                                {% endfor %}
-
-                                {% if filtered_assignments %}
+                        {% for item in filtered_assignments %}
+                            {% if item['student_name'] != ns.last_student %}
+                                {% if ns.last_student != '' %}
                                     </td>
                                     <td>
                                         <form method="post" style="display: inline;">
-                                            <input type="hidden" name="student_id" value="{{ ns.student_assignments[-1]['student_id'] }}">
+                                            <input type="hidden" name="student_id" value="{{ item['student_id'] }}">
                                             <input type="hidden" name="subject_id" value="{{ subject['id'] }}">
-                                            <input type="text" name="assignment_name" placeholder="Assignment name" style="width: 120px; margin-bottom: 5px;" required>
-                                            <br>
-                                            {% if grading_scale == 'letter' %}
-                                                <select name="grade" class="grade-input" required>
-                                                    <option value="">Select Grade</option>
-                                                    <option value="A+">A+</option>
-                                                    <option value="A">A</option>
-                                                    <option value="A-">A-</option>
-                                                    <option value="B+">B+</option>
-                                                    <option value="B">B</option>
-                                                    <option value="B-">B-</option>
-                                                    <option value="C+">C+</option>
-                                                    <option value="C">C</option>
-                                                    <option value="C-">C-</option>
-                                                    <option value="D+">D+</option>
-                                                    <option value="D">D</option>
-                                                    <option value="D-">D-</option>
-                                                    <option value="F">F</option>
-                                                </select>
-                                            {% elif grading_scale == 'gpa' %}
-                                                <input type="number" name="grade" placeholder="GPA" class="grade-input" min="0" max="4.0" step="0.1" required>
-                                            {% else %}
-                                                <input type="number" name="grade" placeholder="%" class="grade-input" min="0" max="100" step="0.1" required>
-                                            {% endif %}
-                                            <button type="submit" class="btn-3d" style="margin-left: 5px;">Add</button>
+                                            <input type="text" name="assignment_name" placeholder="Assignment name" required>
+                                            <input type="number" name="grade" placeholder="Grade" class="grade-input" min="0" max="100" required>
+                                            <button type="submit" class="btn-3d">Add</button>
                                         </form>
                                     </td>
-                                    </tr>
+                                </tr>
                                 {% endif %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% endif %}
+                                <tr>
+                                    <td>{{ item['student_name'] }}</td>
+                                    <td>
+                            {% endif %}
+
+                            {% if item['assignment_name'] %}
+                                <form method="post" style="display: inline-block; margin-right: 15px;">
+                                    <input type="hidden" name="assignment_id" value="{{ item['assignment_id'] }}">
+                                    <input type="hidden" name="student_id" value="{{ item['student_id'] }}">
+                                    <input type="hidden" name="subject_id" value="{{ subject['id'] }}">
+                                    {{ item['assignment_name'] }}:
+                                    <input type="number" name="grade" value="{{ item['grade'] }}" class="grade-input" min="0" max="100" required>
+                                    <button type="submit" class="btn-3d">Update</button>
+                                </form>
+                            {% endif %}
+
+                            {% set ns.last_student = item['student_name'] %}
+                        {% endfor %}
+
+                        {% if filtered_assignments %}
+                            </td>
+                            <td>
+                                <form method="post" style="display: inline;">
+                                    <input type="hidden" name="student_id" value="{{ filtered_assignments[-1]['student_id'] }}">
+                                    <input type="hidden" name="subject_id" value="{{ subject['id'] }}">
+                                    <input type="text" name="assignment_name" placeholder="Assignment name" required>
+                                    <input type="number" name="grade" placeholder="Grade" class="grade-input" min="0" max="100" required>
+                                    <button type="submit" class="btn-3d">Add</button>
+                                </form>
+                            </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
             {% endfor %}
 
             <div class="action-buttons">
                 <a class="btn-3d" href="/teacher_dashboard">Back to Dashboard</a>
-                <a class="btn-3d" href="/admin_settings">Change Grading System</a>
             </div>
         </div>
     </div>
