@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-        <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <link rel="stylesheet" href="/static/styles.css">
     <title>Enter Grades - EduBridge</title>
@@ -45,7 +45,7 @@
     <div class="center-wrapper">
         <div class="dashboard-container card-3d">
             <h1>Enter Grades</h1>
-            
+
             {% for subject in subjects %}
             <div class="subject-section">
                 <h2>{{ subject['name'] }}</h2>
@@ -60,7 +60,7 @@
                     <tbody>
                         {% set filtered_assignments = students_assignments|selectattr('subject_name', 'equalto', subject['name'])|list %}
                         {% set ns = namespace(last_student='') %}
-                        
+
                         {% for item in filtered_assignments %}
                             {% if item['student_name'] != ns.last_student %}
                                 {% if ns.last_student != '' %}
@@ -80,21 +80,21 @@
                                     <td>{{ item['student_name'] }}</td>
                                     <td>
                             {% endif %}
-                            
+
                             {% if item['assignment_name'] %}
                                 <form method="post" style="display: inline-block; margin-right: 15px;">
                                     <input type="hidden" name="assignment_id" value="{{ item['assignment_id'] }}">
                                     <input type="hidden" name="student_id" value="{{ item['student_id'] }}">
                                     <input type="hidden" name="subject_id" value="{{ subject['id'] }}">
-                                    {{ item['assignment_name'] }}: 
+                                    {{ item['assignment_name'] }}:
                                     <input type="number" name="grade" value="{{ item['grade'] }}" class="grade-input" min="0" max="100" required>
                                     <button type="submit" class="btn-3d">Update</button>
                                 </form>
                             {% endif %}
-                            
+
                             {% set ns.last_student = item['student_name'] %}
                         {% endfor %}
-                        
+
                         {% if filtered_assignments %}
                             </td>
                             <td>
@@ -112,7 +112,7 @@
                 </table>
             </div>
             {% endfor %}
-            
+
             <div class="action-buttons">
                 <a class="btn-3d" href="/teacher_dashboard">Back to Dashboard</a>
             </div>

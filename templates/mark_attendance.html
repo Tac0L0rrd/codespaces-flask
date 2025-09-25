@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-        <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <link rel="stylesheet" href="/static/styles.css">
     <title>Mark Attendance - EduBridge</title>
@@ -37,7 +37,7 @@
     <div class="center-wrapper">
         <div class="dashboard-container card-3d">
             <h1>Mark Attendance</h1>
-            
+
             <!-- Subject and Date Selection Form -->
             <form method="GET" class="form-stack">
                 <label for="subject_id">Select Subject:</label>
@@ -49,7 +49,7 @@
                     </option>
                     {% endfor %}
                 </select>
-                
+
                 <label for="date">Date:</label>
                 <input type="date" name="date" id="date" value="{{ selected_date }}" onchange="this.form.submit()" required>
             </form>
@@ -58,7 +58,7 @@
             <form method="POST" class="form-stack">
                 <input type="hidden" name="subject_id" value="{{ selected_subject }}">
                 <input type="hidden" name="date" value="{{ selected_date }}">
-                
+
                 <div class="table-wrapper">
                     <table>
                         <thead>

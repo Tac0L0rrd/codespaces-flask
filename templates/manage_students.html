@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-        <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <link rel="stylesheet" href="/static/styles.css">
     <title>Enroll Students - EduBridge</title>
@@ -39,7 +39,7 @@
     <div class="center-wrapper">
         <div class="dashboard-container card-3d">
             <h1>Enroll Students</h1>
-            
+
             <!-- Subject Selection -->
             <form method="GET" action="/manage_students" class="form-stack">
                 <div>
@@ -59,7 +59,7 @@
             {% if request.args.get('subject_id') %}
                 <form method="POST" class="form-stack">
                     <input type="hidden" name="subject_id" value="{{ request.args.get('subject_id') }}">
-                    
+
                     {% if students %}
                         <div>
                             <label for="student_id">Select Student to Enroll:</label>

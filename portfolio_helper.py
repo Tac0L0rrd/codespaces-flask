@@ -12,7 +12,7 @@ def create_screenshots():
     """Create screenshots of the application for portfolio"""
     print("📸 Screenshot Guide for EduBridge Portfolio")
     print("=" * 50)
-    
+
     urls_to_capture = [
         ("login", "http://localhost:5000/login", "Clean login interface"),
         ("admin_dashboard", "http://localhost:5000/admin", "Admin dashboard with management options"),
@@ -23,17 +23,17 @@ def create_screenshots():
         ("attendance", "http://localhost:5000/mark_attendance", "Attendance tracking"),
         ("reports", "http://localhost:5000/teacher_reports", "Academic reports"),
     ]
-    
+
     print("🎯 Recommended Screenshots:")
     print()
-    
+
     for filename, url, description in urls_to_capture:
         print(f"📱 {filename}.png")
         print(f"   URL: {url}")
         print(f"   Description: {description}")
         print(f"   Login as: {'admin/admin123' if 'admin' in url else 'mr_smith/teacher123' if 'teacher' in url else 'alice_cooper/student123'}")
         print()
-    
+
     print("💡 Screenshot Tips:")
     print("- Use browser dev tools to simulate different devices")
     print("- Capture both desktop and mobile views")
@@ -43,23 +43,23 @@ def create_screenshots():
 
 def create_deployment_config():
     """Create deployment configuration files"""
-    
+
     # Requirements.txt
     requirements = """Flask==2.3.3
 sqlite3
 hashlib
 datetime
 """
-    
+
     with open('requirements.txt', 'w') as f:
         f.write(requirements.strip())
-    
+
     # Procfile for Heroku
     procfile = "web: python app.py"
-    
+
     with open('Procfile', 'w') as f:
         f.write(procfile)
-    
+
     # Railway deployment config
     railway_config = """{
   "build": {
@@ -70,10 +70,10 @@ datetime
     "restartPolicyType": "ON_FAILURE"
   }
 }"""
-    
+
     with open('railway.json', 'w') as f:
         f.write(railway_config)
-    
+
     # Environment setup script
     env_setup = """#!/bin/bash
 # Environment setup for EduBridge deployment
@@ -92,12 +92,12 @@ export FLASK_ENV=production
 
 echo "✅ Setup complete! Run 'python app.py' to start the server."
 """
-    
+
     with open('setup.sh', 'w') as f:
         f.write(env_setup)
-    
+
     os.chmod('setup.sh', 0o755)
-    
+
     print("📦 Deployment files created:")
     print("- requirements.txt (Python dependencies)")
     print("- Procfile (Heroku deployment)")
@@ -107,7 +107,7 @@ echo "✅ Setup complete! Run 'python app.py' to start the server."
 
 def generate_portfolio_assets():
     """Generate additional portfolio assets"""
-    
+
     # Technology badges for README
     tech_badges = """
 <!-- Technology Stack Badges -->
@@ -119,7 +119,7 @@ def generate_portfolio_assets():
 ![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 """
-    
+
     # Project metrics
     project_stats = """
 ## 📊 Project Statistics
@@ -132,7 +132,7 @@ def generate_portfolio_assets():
 - **Responsive Breakpoints**: 3 device categories
 - **Test Coverage**: Demo data for all features
 """
-    
+
     # Demo instructions
     demo_instructions = """
 ## 🎮 Live Demo Instructions
@@ -161,23 +161,23 @@ python app.py
 4. **Student View** → Personal academic progress
 5. **Responsive Design** → Resize browser window
 """
-    
+
     with open('DEMO_GUIDE.md', 'w') as f:
         f.write("# EduBridge Demo Guide\n")
         f.write(tech_badges)
         f.write(project_stats)
         f.write(demo_instructions)
-    
+
     print("📋 Portfolio assets created:")
     print("- DEMO_GUIDE.md (Comprehensive demo instructions)")
     print()
 
 def deployment_options():
     """Show deployment options"""
-    
+
     print("🌐 Deployment Options for Portfolio")
     print("=" * 40)
-    
+
     options = [
         {
             "platform": "Railway",
@@ -188,7 +188,7 @@ def deployment_options():
         },
         {
             "platform": "Render",
-            "cost": "Free tier available", 
+            "cost": "Free tier available",
             "setup": "GitHub connection → Web service",
             "pros": "Simple, reliable, good docs",
             "url": "https://render.com"
@@ -197,7 +197,7 @@ def deployment_options():
             "platform": "PythonAnywhere",
             "cost": "Free tier with limitations",
             "setup": "Upload files → Configure web app",
-            "pros": "Python-focused, beginner-friendly", 
+            "pros": "Python-focused, beginner-friendly",
             "url": "https://pythonanywhere.com"
         },
         {
@@ -208,7 +208,7 @@ def deployment_options():
             "url": "https://replit.com"
         }
     ]
-    
+
     for i, option in enumerate(options, 1):
         print(f"{i}. **{option['platform']}**")
         print(f"   Cost: {option['cost']}")
@@ -216,7 +216,7 @@ def deployment_options():
         print(f"   Pros: {option['pros']}")
         print(f"   URL: {option['url']}")
         print()
-    
+
     print("🔧 Recommended for Portfolio: Railway or Render")
     print("   → Both offer easy GitHub integration")
     print("   → Good uptime and performance")
@@ -226,12 +226,12 @@ def deployment_options():
 if __name__ == '__main__':
     print("🎯 EduBridge Portfolio Preparation Tool")
     print("=====================================")
-    
+
     create_screenshots()
     create_deployment_config()
     generate_portfolio_assets()
     deployment_options()
-    
+
     print("🎉 Portfolio preparation complete!")
     print()
     print("📋 Next Steps:")

@@ -126,7 +126,7 @@ body {
     .navbar-links {
         display: none;
     }
-    
+
     .navbar-links.show {
         display: flex;
         position: absolute;
@@ -137,7 +137,7 @@ body {
         background: rgba(255, 245, 230, 0.96);
         padding: 1em;
     }
-    
+
     .menu-toggle {
         display: block;
     }
@@ -181,7 +181,7 @@ body {
         margin: 1em auto;
         min-width: 300px;
     }
-    
+
     .dashboard-container,
     .container {
         width: 95%;
@@ -197,17 +197,17 @@ body {
         min-width: 280px;
         min-height: 350px;
     }
-    
+
     .auth-container .form-stack {
         max-width: 100%;
         gap: 1em;
     }
-    
+
     .auth-container .btn-3d {
         max-width: 100%;
         padding: 1em 2em;
     }
-    
+
     .dashboard-container,
     .container {
         padding: 1.5em 1em;
@@ -215,20 +215,20 @@ body {
         min-width: 300px;
         min-height: 400px;
     }
-    
+
     .form-stack {
         max-width: 100%;
     }
-    
+
     .admin-actions {
         max-width: 100%;
         gap: 1em;
     }
-    
+
     .admin-btn {
         min-width: 100%;
     }
-    
+
     .button-group {
         max-width: 100%;
     }
@@ -509,7 +509,7 @@ th, td {
         flex-wrap: wrap;
         max-width: 600px;
     }
-    
+
     .admin-btn {
         flex: 1;
         min-width: 180px;

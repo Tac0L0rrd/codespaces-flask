@@ -1,20 +1,27 @@
+"""
+EduBridge - School Management System
+A comprehensive Flask-based web application for managing educational institutions.
+Features: User management, course enrollment, assignment tracking, attendance, and reporting.
+"""
+
 from flask import Flask, render_template, request, redirect, session, url_for
 import sqlite3
 import os
 from datetime import datetime, date
 
+# Application Configuration
 app = Flask(__name__)
-app.secret_key = 'supersecretkey'
+app.secret_key = 'supersecretkey'  # Change this in production
 DATABASE = os.path.join(os.path.dirname(__file__), 'school.db')
 
 # --- Helper Functions ---
 def get_db():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
-    
+
     # Create tables if they don't exist
     cur = conn.cursor()
-    
+
     # Users table
     cur.execute('''CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY,
@@ -22,14 +29,14 @@ def get_db():
         password TEXT,
         role TEXT
     )''')
-    
+
     # Subjects table
     cur.execute('''CREATE TABLE IF NOT EXISTS subjects (
         id INTEGER PRIMARY KEY,
         name TEXT,
         teacher_id INTEGER REFERENCES users(id)
     )''')
-    
+
     # Assignments table
     cur.execute('''CREATE TABLE IF NOT EXISTS assignments (
         id INTEGER PRIMARY KEY,
@@ -38,7 +45,7 @@ def get_db():
         subject_id INTEGER,
         user_id INTEGER
     )''')
-    
+
     # Enrollments table
     cur.execute('''CREATE TABLE IF NOT EXISTS enrollments (
         id INTEGER PRIMARY KEY,
@@ -48,7 +55,7 @@ def get_db():
         FOREIGN KEY (subject_id) REFERENCES subjects(id),
         UNIQUE(user_id, subject_id)
     )''')
-    
+
     # Attendance table
     cur.execute('''CREATE TABLE IF NOT EXISTS attendance (
         id INTEGER PRIMARY KEY,
@@ -59,7 +66,7 @@ def get_db():
         FOREIGN KEY (user_id) REFERENCES users(id),
         FOREIGN KEY (subject_id) REFERENCES subjects(id)
     )''')
-    
+
     # User settings table
     cur.execute('''CREATE TABLE IF NOT EXISTS user_settings (
         user_id INTEGER PRIMARY KEY,
@@ -68,7 +75,7 @@ def get_db():
         attendance_reminders BOOLEAN DEFAULT 0,
         FOREIGN KEY (user_id) REFERENCES users(id)
     )''')
-    
+
     conn.commit()
     return conn
 
@@ -85,74 +92,74 @@ def init_demo_data():
     """Initialize demo data for Vercel deployment"""
     conn = get_db()
     cursor = conn.cursor()
-    
+
     # Check if data already exists
     cursor.execute("SELECT COUNT(*) FROM users")
     if cursor.fetchone()[0] > 0:
         conn.close()
         return  # Data already exists
-    
+
     print("Initializing demo data for Vercel...")
-    
+
     # Create admin users
     cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", ('admin', 'admin123', 'admin'))  # Demo admin
     cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", ('Admin', '2009', 'admin'))      # Real admin
-    
+
     # Teachers
     teachers = [
         ('mr_smith', 'Mathematics Teacher'),
-        ('ms_johnson', 'English Literature Teacher'), 
+        ('ms_johnson', 'English Literature Teacher'),
         ('dr_brown', 'Science Teacher'),
         ('ms_davis', 'History Teacher'),
         ('mr_wilson', 'Physical Education Teacher')
     ]
-    
+
     for username, _ in teachers:
         cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", (username, 'teacher123', 'teacher'))
-    
+
     # Students
     students = [
         'alice_cooper', 'bob_johnson', 'charlie_brown', 'diana_prince',
         'edward_cullen', 'fiona_green', 'george_lucas', 'hannah_montana',
         'isaac_newton', 'julia_roberts', 'kevin_bacon', 'laura_croft'
     ]
-    
+
     for student in students:
         cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", (student, 'student123', 'student'))
-    
+
     # Create subjects
     subjects_data = [
         ('Mathematics', 2),  # mr_smith
-        ('English Literature', 3),  # ms_johnson  
+        ('English Literature', 3),  # ms_johnson
         ('Science', 4),  # dr_brown
         ('History', 5),  # ms_davis
         ('Physical Education', 6)  # mr_wilson
     ]
-    
+
     for subject_name, teacher_id in subjects_data:
         cursor.execute("INSERT INTO subjects (name, teacher_id) VALUES (?, ?)", (subject_name, teacher_id))
-    
+
     # Enroll students in subjects (first 8 students in all subjects)
     for subject_id in range(1, 6):  # 5 subjects
         for student_id in range(7, 15):  # Students 7-14 (alice_cooper onwards)
             cursor.execute("INSERT INTO enrollments (user_id, subject_id) VALUES (?, ?)", (student_id, subject_id))
-    
+
     # Create sample assignments with grades
     import random
     assignment_names = [
-        'Midterm Exam', 'Final Project', 'Quiz 1', 'Homework Assignment', 
+        'Midterm Exam', 'Final Project', 'Quiz 1', 'Homework Assignment',
         'Lab Report', 'Essay Assignment', 'Group Project', 'Presentation'
     ]
-    
+
     for subject_id in range(1, 6):
         for i, assignment_name in enumerate(assignment_names[:4]):  # 4 assignments per subject
             for student_id in range(7, 15):  # Students with enrollments
                 grade = random.randint(70, 98)
                 cursor.execute("""
-                    INSERT INTO assignments (name, subject_id, user_id, grade, date_assigned) 
+                    INSERT INTO assignments (name, subject_id, user_id, grade, date_assigned)
                     VALUES (?, ?, ?, ?, ?)
                 """, (f"{assignment_name}", subject_id, student_id, grade, '2024-09-01'))
-    
+
     conn.commit()
     conn.close()
     print("Demo data initialized successfully!")
@@ -224,38 +231,38 @@ def manage_users():
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT * FROM users")
-    
+
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
         role = request.form['role']
-        cur.execute("INSERT INTO users (username,password,role) VALUES (?,?,?)", 
+        cur.execute("INSERT INTO users (username,password,role) VALUES (?,?,?)",
                    (username,password,role))
         conn.commit()
-    
+
     # Get all users
     cur.execute("SELECT * FROM users")
     users = cur.fetchall()
-    
+
     # Get all subjects
     cur.execute("SELECT id, name FROM subjects")
     subjects = cur.fetchall()
-    
+
     # Get current enrollments
-    cur.execute('''SELECT enrollments.user_id, enrollments.subject_id 
+    cur.execute('''SELECT enrollments.user_id, enrollments.subject_id
                    FROM enrollments''')
     enrollments = cur.fetchall()
-    
-    return render_template('manage_users.html', 
-                         users=users, 
-                         subjects=subjects, 
+
+    return render_template('manage_users.html',
+                         users=users,
+                         subjects=subjects,
                          enrollments=enrollments)
 
 @app.route('/delete_user', methods=['POST'])
 def delete_user():
     if not is_admin():
         return redirect(url_for('login'))
-    
+
     user_id = request.form['user_id']
     conn = get_db()
     cur = conn.cursor()
@@ -273,7 +280,7 @@ def manage_subjects():
         return redirect(url_for('login'))
     conn = get_db()
     cur = conn.cursor()
-    
+
     if request.method == 'POST':
         subject_name = request.form['subject_name']
         teacher_id = request.form.get('teacher_id')
@@ -281,8 +288,8 @@ def manage_subjects():
         conn.commit()
 
     # Get all subjects
-    cur.execute('''SELECT subjects.*, users.username as teacher_name 
-                   FROM subjects 
+    cur.execute('''SELECT subjects.*, users.username as teacher_name
+                   FROM subjects
                    LEFT JOIN users ON subjects.teacher_id = users.id''')
     subjects = cur.fetchall()
     cur.execute("SELECT id, username FROM users WHERE role='teacher'")
@@ -293,11 +300,11 @@ def manage_subjects():
 def delete_subject():
     if not is_admin():
         return redirect(url_for('login'))
-    
+
     subject_id = request.form['subject_id']
     conn = get_db()
     cur = conn.cursor()
-    
+
     # Proceed with deletion
     cur.execute("DELETE FROM subjects WHERE id=?", (subject_id,))
     cur.execute("DELETE FROM assignments WHERE subject_id=?", (subject_id,))
@@ -329,8 +336,8 @@ def manage_assignments():
             if is_admin():
                 cur.execute("DELETE FROM assignments WHERE id = ?", (assignment_id,))
             else:
-                cur.execute('''DELETE FROM assignments 
-                              WHERE id = ? AND subject_id IN 
+                cur.execute('''DELETE FROM assignments
+                              WHERE id = ? AND subject_id IN
                               (SELECT id FROM subjects WHERE teacher_id = ?)''',
                               (assignment_id, user_id))
             conn.commit()
@@ -338,10 +345,10 @@ def manage_assignments():
             subject_id = request.form['subject_id']
             assignment_name = request.form['assignment_name']
             user_id = request.form.get('user_id')
-            
+
             # Verify subject belongs to teacher
             if not is_admin():
-                cur.execute("SELECT id FROM subjects WHERE id = ? AND teacher_id = ?", 
+                cur.execute("SELECT id FROM subjects WHERE id = ? AND teacher_id = ?",
                            (subject_id, user_id))
                 if not cur.fetchone():
                     return redirect(url_for('manage_assignments'))
@@ -377,20 +384,20 @@ def manage_assignments():
                        WHERE subjects.teacher_id = ? AND users.role = 'student' ''', (user_id,))
     students = cur.fetchall()
 
-    return render_template('manage_assignments.html', 
-                         subjects=subjects, 
-                         students=students, 
+    return render_template('manage_assignments.html',
+                         subjects=subjects,
+                         students=students,
                          assignments=assignments)
 
 @app.route('/delete_assignment', methods=['POST'])
 def delete_assignment():
     if not (is_admin() or is_teacher()):
         return redirect(url_for('login'))
-    
+
     assignment_id = request.form['assignment_id']
     conn = get_db()
     cur = conn.cursor()
-    
+
     # Proceed with deletion
     cur.execute("DELETE FROM assignments WHERE id=?", (assignment_id,))
     conn.commit()
@@ -400,12 +407,12 @@ def delete_assignment():
 def edit_grade():
     if not (is_admin() or is_teacher()):
         return redirect(url_for('login'))
-    
+
     assignment_id = request.form['assignment_id']
     grade = request.form['grade']
     conn = get_db()
     cur = conn.cursor()
-    
+
     # Proceed with grade update
     cur.execute("UPDATE assignments SET grade=? WHERE id=?", (grade, assignment_id))
     conn.commit()
@@ -422,8 +429,8 @@ def student_dashboard():
     cur = conn.cursor()
 
     # Get subjects the student is enrolled in
-    cur.execute('''SELECT DISTINCT 
-                subjects.id, 
+    cur.execute('''SELECT DISTINCT
+                subjects.id,
                 subjects.name,
                 users.username as teacher_name
                 FROM subjects
@@ -435,22 +442,22 @@ def student_dashboard():
     subject_grades = []
     for s in subjects:
         # Get average grade for completed assignments
-        cur.execute('''SELECT AVG(grade) as avg_grade 
-                      FROM assignments 
-                      WHERE user_id = ? 
-                      AND subject_id = ? 
+        cur.execute('''SELECT AVG(grade) as avg_grade
+                      FROM assignments
+                      WHERE user_id = ?
+                      AND subject_id = ?
                       AND grade > 0''', (user_id, s['id']))
         avg_grade = cur.fetchone()['avg_grade'] or 0
-        
+
         # Get all assignments for this subject
-        cur.execute('''SELECT name, grade 
-                      FROM assignments 
-                      WHERE subject_id = ? 
-                      AND (user_id = ? OR user_id IN 
-                          (SELECT id FROM users WHERE role = 'teacher'))''', 
+        cur.execute('''SELECT name, grade
+                      FROM assignments
+                      WHERE subject_id = ?
+                      AND (user_id = ? OR user_id IN
+                          (SELECT id FROM users WHERE role = 'teacher'))''',
                       (s['id'], user_id))
         assignments = cur.fetchall()
-        
+
         subject_grades.append({
             'subject': s['name'],
             'id': s['id'],
@@ -472,11 +479,11 @@ def student_dashboard():
     conn.commit()
 
     # Get student's schedule
-    cur.execute('''SELECT subjects.name, schedule.day, schedule.period 
+    cur.execute('''SELECT subjects.name, schedule.day, schedule.period
                    FROM schedule
                    JOIN subjects ON schedule.subject_id = subjects.id
                    WHERE schedule.user_id = ?
-                   ORDER BY 
+                   ORDER BY
                      CASE schedule.day
                        WHEN 'Monday' THEN 1
                        WHEN 'Tuesday' THEN 2
@@ -488,7 +495,7 @@ def student_dashboard():
     schedule = cur.fetchall()
 
     # Get student's attendance
-    cur.execute('''SELECT 
+    cur.execute('''SELECT
                    subjects.name,
                    COUNT(CASE WHEN present = 1 THEN 1 END) as present_count,
                    COUNT(*) as total_count
@@ -550,8 +557,8 @@ def teacher_dashboard():
     students_count = cur.fetchone()['student_count'] or 0
 
     # Get active assignments (assignments with no grades yet)
-    cur.execute('''SELECT COUNT(*) as active_assignments 
-                   FROM assignments 
+    cur.execute('''SELECT COUNT(*) as active_assignments
+                   FROM assignments
                    JOIN subjects ON assignments.subject_id = subjects.id
                    WHERE subjects.teacher_id = ? AND (grade IS NULL OR grade = 0)''', (user_id,))
     active_assignments = cur.fetchone()['active_assignments'] or 0
@@ -638,7 +645,7 @@ def enter_grades():
     # Get all students and their assignments for each subject
     students_assignments = []
     for subject in subjects:
-        cur.execute('''SELECT 
+        cur.execute('''SELECT
                         users.id as student_id,
                         users.username as student_name,
                         assignments.id as assignment_id,
@@ -649,7 +656,7 @@ def enter_grades():
                     JOIN enrollments ON users.id = enrollments.user_id
                     JOIN subjects ON enrollments.subject_id = subjects.id
                     LEFT JOIN assignments ON (
-                        assignments.subject_id = subjects.id 
+                        assignments.subject_id = subjects.id
                         AND assignments.user_id = users.id
                     )
                     WHERE subjects.id = ? AND users.role = 'student'
@@ -664,18 +671,18 @@ def enter_grades():
         assignment_id = request.form.get('assignment_id')
 
         if assignment_id:  # Update existing assignment
-            cur.execute('''UPDATE assignments 
-                          SET grade = ? 
-                          WHERE id = ? AND subject_id = ?''', 
+            cur.execute('''UPDATE assignments
+                          SET grade = ?
+                          WHERE id = ? AND subject_id = ?''',
                           (grade, assignment_id, subject_id))
         else:  # Create new assignment
-            cur.execute('''INSERT INTO assignments (name, grade, subject_id, user_id) 
-                          VALUES (?, ?, ?, ?)''', 
+            cur.execute('''INSERT INTO assignments (name, grade, subject_id, user_id)
+                          VALUES (?, ?, ?, ?)''',
                           (assignment_name, grade, subject_id, student_id))
         conn.commit()
         return redirect(url_for('enter_grades'))
 
-    return render_template('enter_grades.html', 
+    return render_template('enter_grades.html',
                          subjects=subjects,
                          students_assignments=students_assignments)
 
@@ -707,7 +714,7 @@ def mark_attendance():
 
     # Initialize attendance data list
     attendance_data = []
-    
+
     # Get selected date and subject from query parameters, defaulting to today
     selected_date = request.args.get('date', today)
     selected_subject = request.args.get('subject_id')
@@ -715,7 +722,7 @@ def mark_attendance():
     if selected_subject:
         # Get all students enrolled in the selected subject and their attendance
         cur.execute('''
-            SELECT 
+            SELECT
                 users.id AS student_id,
                 users.username,
                 attendance.present,
@@ -723,8 +730,8 @@ def mark_attendance():
             FROM users
             JOIN enrollments ON users.id = enrollments.user_id
             LEFT JOIN attendance ON (
-                attendance.user_id = users.id 
-                AND attendance.subject_id = ? 
+                attendance.user_id = users.id
+                AND attendance.subject_id = ?
                 AND attendance.date = ?
             )
             WHERE enrollments.subject_id = ? AND users.role = 'student'
@@ -735,11 +742,11 @@ def mark_attendance():
     if request.method == 'POST':
         subject_id = request.form['subject_id']
         date = request.form['date']
-        
+
         # First delete any existing attendance records for this date and subject
-        cur.execute('''DELETE FROM attendance 
+        cur.execute('''DELETE FROM attendance
                       WHERE subject_id = ? AND date = ?''', (subject_id, date))
-        
+
         # Insert new attendance records
         for key, value in request.form.items():
             if key.startswith('student_'):
@@ -747,7 +754,7 @@ def mark_attendance():
                 present = 1 if value == 'present' else 0
                 cur.execute('''INSERT INTO attendance (user_id, subject_id, date, present)
                               VALUES (?, ?, ?, ?)''', (student_id, subject_id, date, present))
-        
+
         conn.commit()
         return redirect(url_for('mark_attendance', subject_id=subject_id, date=date))
 
@@ -767,7 +774,7 @@ def mark_attendance():
 def enroll_student():
     if not (is_admin() or is_teacher()):
         return redirect(url_for('login'))
-    
+
     user_id = session['user_id']
     conn = get_db()
     cur = conn.cursor()
@@ -775,14 +782,14 @@ def enroll_student():
     if request.method == 'POST':
         student_id = request.form['student_id']
         subject_id = request.form['subject_id']
-        
+
         try:
-            cur.execute("INSERT INTO enrollments (user_id, subject_id) VALUES (?, ?)", 
+            cur.execute("INSERT INTO enrollments (user_id, subject_id) VALUES (?, ?)",
                        (student_id, subject_id))
             conn.commit()
         except sqlite3.IntegrityError:
             pass  # Student is already enrolled
-        
+
         if is_admin():
             return redirect(url_for('manage_users'))
         return redirect(url_for('teacher_dashboard'))
@@ -795,10 +802,10 @@ def enroll_student():
     selected_subject = request.args.get('subject_id')
     students = []
     if selected_subject:
-        cur.execute('''SELECT id, username FROM users 
-                      WHERE role = 'student' 
+        cur.execute('''SELECT id, username FROM users
+                      WHERE role = 'student'
                       AND id NOT IN (
-                          SELECT user_id FROM enrollments 
+                          SELECT user_id FROM enrollments
                           WHERE subject_id = ?
                       )''', (selected_subject,))
         students = cur.fetchall()
@@ -806,13 +813,12 @@ def enroll_student():
     return render_template('manage_students.html', subjects=subjects, students=students)
 
 
-
 # --- Teacher Settings ---
 @app.route('/teacher_settings', methods=['GET','POST'])
 def teacher_settings():
     if not is_teacher():
         return redirect(url_for('login'))
-    
+
     user_id = session['user_id']
     conn = get_db()
     cur = conn.cursor()
@@ -845,7 +851,7 @@ def teacher_settings():
         username = request.form['username']
         new_password = request.form.get('new_password')
         confirm_password = request.form.get('confirm_password')
-        
+
         # Update username if changed
         if username != current_user['username']:
             cur.execute("SELECT id FROM users WHERE username = ? AND id != ?", (username, user_id))
@@ -868,11 +874,11 @@ def teacher_settings():
         assignment_reminders = 1 if request.form.get('assignment_reminders') else 0
         attendance_reminders = 1 if request.form.get('attendance_reminders') else 0
 
-        cur.execute('''INSERT OR REPLACE INTO user_settings 
+        cur.execute('''INSERT OR REPLACE INTO user_settings
                       (user_id, email_notifications, assignment_reminders, attendance_reminders)
                       VALUES (?, ?, ?, ?)''',
                    (user_id, email_notifications, assignment_reminders, attendance_reminders))
-        
+
         conn.commit()
         if not error:
             success = "Settings updated successfully"
@@ -917,15 +923,15 @@ def teacher_reports():
     total_students = cur.fetchone()['total_students'] or 0
 
     # Get total assignments in teacher's subjects
-    cur.execute('''SELECT COUNT(*) AS total_assignments 
-                   FROM assignments 
+    cur.execute('''SELECT COUNT(*) AS total_assignments
+                   FROM assignments
                    JOIN subjects ON assignments.subject_id = subjects.id
                    WHERE subjects.teacher_id=?''', (user_id,))
     total_assignments = cur.fetchone()['total_assignments'] or 0
 
     # Get average grade in teacher's subjects
-    cur.execute('''SELECT AVG(grade) AS avg_grade 
-                   FROM assignments 
+    cur.execute('''SELECT AVG(grade) AS avg_grade
+                   FROM assignments
                    JOIN subjects ON assignments.subject_id = subjects.id
                    WHERE subjects.teacher_id=? AND grade IS NOT NULL AND grade > 0''', (user_id,))
     average_grade = cur.fetchone()['avg_grade'] or 0
@@ -953,7 +959,7 @@ def teacher_reports():
 def manage_schedule():
     if not (is_admin() or is_teacher()):
         return redirect(url_for('login'))
-        
+
     user_id = session['user_id']
     conn = get_db()
     cur = conn.cursor()
@@ -979,16 +985,16 @@ def manage_schedule():
         if action == 'delete':
             if 'schedule_id' in request.form:  # For schedule deletion
                 schedule_id = request.form['schedule_id']
-                cur.execute('''DELETE FROM schedule 
-                              WHERE id = ? AND subject_id IN 
-                              (SELECT id FROM subjects WHERE teacher_id = ?)''', 
+                cur.execute('''DELETE FROM schedule
+                              WHERE id = ? AND subject_id IN
+                              (SELECT id FROM subjects WHERE teacher_id = ?)''',
                               (schedule_id, user_id))
                 conn.commit()
             elif 'assignment_id' in request.form:  # For assignment deletion
                 assignment_id = request.form['assignment_id']
                 # Only delete if the assignment belongs to one of the teacher's subjects
-                cur.execute('''DELETE FROM assignments 
-                              WHERE id = ? AND subject_id IN 
+                cur.execute('''DELETE FROM assignments
+                              WHERE id = ? AND subject_id IN
                               (SELECT id FROM subjects WHERE teacher_id = ?)''',
                               (assignment_id, user_id))
                 conn.commit()
@@ -998,21 +1004,21 @@ def manage_schedule():
             period = request.form['period']
 
             # Check for existing schedule in that time slot
-            cur.execute('''SELECT COUNT(*) as count FROM schedule 
-                          WHERE day = ? AND period = ? AND subject_id IN 
-                          (SELECT id FROM subjects WHERE teacher_id = ?)''', 
+            cur.execute('''SELECT COUNT(*) as count FROM schedule
+                          WHERE day = ? AND period = ? AND subject_id IN
+                          (SELECT id FROM subjects WHERE teacher_id = ?)''',
                           (day, period, user_id))
             if cur.fetchone()['count'] == 0:
-                cur.execute('''INSERT INTO schedule (subject_id, day, period) 
+                cur.execute('''INSERT INTO schedule (subject_id, day, period)
                               VALUES (?, ?, ?)''', (subject_id, day, period))
                 conn.commit()
 
     # Get current schedule
-    cur.execute('''SELECT schedule.*, subjects.name as subject_name 
+    cur.execute('''SELECT schedule.*, subjects.name as subject_name
                    FROM schedule
                    JOIN subjects ON schedule.subject_id = subjects.id
                    WHERE subjects.teacher_id = ?
-                   ORDER BY 
+                   ORDER BY
                      CASE schedule.day
                        WHEN 'Monday' THEN 1
                        WHEN 'Tuesday' THEN 2
@@ -1023,31 +1029,17 @@ def manage_schedule():
                      schedule.period''', (user_id,))
     schedule = cur.fetchall()
 
-    return render_template('manage_schedule.html', 
+    return render_template('manage_schedule.html',
                          subjects=subjects,
                          schedule=schedule,
                          days=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
                          periods=range(1, 9))
 
 # --- Initialize Database ---
-def init_db():
-    if not os.path.exists(DATABASE):
-        conn = sqlite3.connect(DATABASE)
-        cur = conn.cursor()
-        cur.execute('''CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT UNIQUE, password TEXT, role TEXT)''')
-        cur.execute('''CREATE TABLE subjects (id INTEGER PRIMARY KEY, name TEXT, teacher_id INTEGER REFERENCES users(id))''')
-        cur.execute('''CREATE TABLE assignments (id INTEGER PRIMARY KEY, name TEXT, grade REAL, subject_id INTEGER, user_id INTEGER)''')
-        cur.execute('''CREATE TABLE enrollments (user_id INTEGER, subject_id INTEGER)''')
-        cur.execute('''CREATE TABLE schedule (user_id INTEGER, subject_id INTEGER, day TEXT, period INTEGER)''')
-        cur.execute('''CREATE TABLE attendance (id INTEGER PRIMARY KEY, user_id INTEGER, subject_id INTEGER, date TEXT, present INTEGER)''')
-        conn.commit()
-        conn.close()
-
-    pass
-
 if __name__ == '__main__':
-    init_db()
-    init_demo_data()  # Initialize demo data for Vercel
+    # Initialize database and demo data for local development
+    get_db()  # Creates database and tables if they don't exist
+    init_demo_data()  # Initialize demo data
     app.run(debug=True)
 
 # Initialize demo data for production deployment (like Vercel)
