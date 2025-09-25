@@ -21,8 +21,6 @@ Use these demo accounts to explore the system:
 | **📚 Teacher** | `mr_smith` | `teacher123` | Grade entry, attendance, class management |
 | **🎓 Student** | `alice_cooper` | `student123` | View grades, assignments, attendance |
 
-*Additional admin account: `Admin` / `2009` (owner access)*
-
 ## 💻 Technical Highlights & Architecture
 
 ### 🏗️ **System Architecture**
