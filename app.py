@@ -69,6 +69,14 @@ def get_db():
         FOREIGN KEY (user_id) REFERENCES users(id)
     )''')
     
+    # System settings table
+    cur.execute('''CREATE TABLE IF NOT EXISTS system_settings (
+        id INTEGER PRIMARY KEY,
+        setting_name TEXT UNIQUE,
+        setting_value TEXT,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+    
     conn.commit()
     return conn
 
@@ -139,6 +147,95 @@ def admin_dashboard():
     if not is_admin():
         return redirect(url_for('login'))
     return render_template('admin_dashboard.html')
+
+@app.route('/system_analytics')
+def system_analytics():
+    if not is_admin():
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cur = conn.cursor()
+    
+    # Get overall statistics
+    cur.execute("SELECT COUNT(*) FROM users WHERE role='student'")
+    total_students = cur.fetchone()[0]
+    
+    cur.execute("SELECT COUNT(*) FROM users WHERE role='teacher'")
+    total_teachers = cur.fetchone()[0]
+    
+    cur.execute("SELECT COUNT(*) FROM subjects")
+    total_subjects = cur.fetchone()[0]
+    
+    cur.execute("SELECT COUNT(*) FROM assignments")
+    total_assignments = cur.fetchone()[0]
+    
+    # Get average grades
+    cur.execute("SELECT AVG(grade) FROM assignments WHERE grade IS NOT NULL")
+    avg_grade = cur.fetchone()[0] or 0
+    
+    # Get attendance rate
+    cur.execute("SELECT AVG(present) FROM attendance")
+    attendance_rate = (cur.fetchone()[0] or 0) * 100
+    
+    # Get subject performance
+    cur.execute("""
+        SELECT s.name, 
+               u.username as teacher_name, 
+               AVG(a.grade) as avg_grade, 
+               COUNT(DISTINCT a.id) as assignment_count,
+               COUNT(DISTINCT e.user_id) as student_count
+        FROM subjects s
+        LEFT JOIN users u ON s.teacher_id = u.id
+        LEFT JOIN assignments a ON s.id = a.subject_id AND a.grade IS NOT NULL
+        LEFT JOIN enrollments e ON s.id = e.subject_id
+        GROUP BY s.id, s.name, u.username
+        ORDER BY avg_grade DESC
+    """)
+    subject_performance = cur.fetchall()
+    
+    return render_template('system_analytics.html',
+                         total_students=total_students,
+                         total_teachers=total_teachers,
+                         total_subjects=total_subjects,
+                         total_assignments=total_assignments,
+                         avg_grade=round(avg_grade, 1),
+                         attendance_rate=round(attendance_rate, 1),
+                         subject_performance=subject_performance)
+
+@app.route('/system_settings', methods=['GET', 'POST'])
+def system_settings():
+    if not is_admin():
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        try:
+            conn = get_db()
+            cur = conn.cursor()
+            
+            # Extract form data
+            email_notifications = 1 if request.form.get('email_notifications') else 0
+            force_password_change = 1 if request.form.get('force_password_change') else 0
+            
+            # Save settings
+            cur.execute('''INSERT OR REPLACE INTO system_settings 
+                          (setting_name, setting_value) VALUES (?, ?),
+                          (?, ?)''', 
+                          ('email_notifications', str(email_notifications),
+                           'force_password_change', str(force_password_change)))
+            
+            conn.commit()
+            return redirect(url_for('system_settings'))
+            
+        except Exception as e:
+            return redirect(url_for('system_settings'))
+    
+    # Load current settings
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT setting_name, setting_value FROM system_settings")
+    settings = dict(cur.fetchall())
+    
+    return render_template('admin_settings.html', settings=settings)
 
 # --- Admin: Users / Subjects / Assignments / Schedule ---
 @app.route('/manage_users', methods=['GET','POST'])
@@ -335,6 +432,82 @@ def edit_grade():
     conn.commit()
     return redirect(url_for('manage_assignments'))
 
+# --- Student Progress and Attendance ---
+@app.route('/student_progress')
+def student_progress():
+    if not is_student():
+        return redirect(url_for('login'))
+    
+    user_id = session['user_id']
+    conn = get_db()
+    cur = conn.cursor()
+
+    # Get student's subjects and grades
+    cur.execute('''SELECT subjects.name as subject,
+                          users.username as teacher_name,
+                          AVG(assignments.grade) as avg_grade
+                   FROM enrollments
+                   JOIN subjects ON enrollments.subject_id = subjects.id
+                   LEFT JOIN users ON subjects.teacher_id = users.id
+                   LEFT JOIN assignments ON assignments.subject_id = subjects.id
+                   AND assignments.user_id = ?
+                   WHERE enrollments.user_id = ?
+                   GROUP BY subjects.id''', (user_id, user_id))
+    
+    subjects = []
+    total_grade = 0
+    total_subjects = 0
+    
+    for s in cur.fetchall():
+        avg_grade = s['avg_grade'] if s['avg_grade'] else 0
+        total_grade += avg_grade
+        total_subjects += 1
+        
+        subjects.append({
+            'subject': s['subject'],
+            'teacher': s['teacher_name'],
+            'avg_grade': avg_grade
+        })
+    
+    overall_grade = total_grade / total_subjects if total_subjects > 0 else 0
+    
+    return render_template('student_progress.html',
+                         subjects=subjects,
+                         overall_grade=overall_grade)
+
+@app.route('/student_attendance')
+def student_attendance():
+    if not is_student():
+        return redirect(url_for('login'))
+    
+    user_id = session['user_id']
+    conn = get_db()
+    cur = conn.cursor()
+    
+    # Get attendance records
+    cur.execute('''SELECT subjects.name as subject_name,
+                          attendance.date,
+                          attendance.present
+                   FROM attendance
+                   JOIN subjects ON attendance.subject_id = subjects.id
+                   WHERE attendance.user_id = ?
+                   ORDER BY attendance.date DESC''', (user_id,))
+    attendance_records = cur.fetchall()
+    
+    # Get attendance statistics by subject
+    cur.execute('''SELECT subjects.name as subject_name,
+                          COUNT(*) as total_classes,
+                          SUM(present) as classes_present
+                   FROM attendance
+                   JOIN subjects ON attendance.subject_id = subjects.id
+                   WHERE attendance.user_id = ?
+                   GROUP BY subjects.id''', (user_id,))
+    subject_attendance = cur.fetchall()
+    
+    return render_template('student_attendance.html',
+                         attendance_records=attendance_records,
+                         subject_attendance=subject_attendance)
+
 # --- Student Dashboard ---
 @app.route('/student_dashboard')
 def student_dashboard():
@@ -449,6 +622,43 @@ def subject(subject_id):
     cur.execute("SELECT name, grade FROM assignments WHERE subject_id=? AND user_id=?", (subject_id, user_id))
     assignments = cur.fetchall()
     return render_template('subject.html', subject=sub['name'], assignments=assignments)
+
+# --- Teacher Analytics ---
+@app.route('/teacher_analytics')
+def teacher_analytics():
+    if not is_teacher():
+        return redirect(url_for('login'))
+    
+    user_id = session['user_id']
+    conn = get_db()
+    cur = conn.cursor()
+
+    # Get overall analytics
+    cur.execute('''SELECT AVG(assignments.grade) as overall_avg,
+                          COUNT(DISTINCT assignments.id) as total_assignments,
+                          COUNT(DISTINCT enrollments.user_id) as total_students
+                   FROM assignments
+                   JOIN subjects ON assignments.subject_id = subjects.id
+                   JOIN enrollments ON enrollments.subject_id = subjects.id
+                   WHERE subjects.teacher_id = ?''', (user_id,))
+    stats = cur.fetchone()
+    
+    overall_average = stats['overall_avg'] if stats['overall_avg'] else 0
+    total_assignments = stats['total_assignments']
+    total_students = stats['total_students']
+    
+    # Get attendance statistics
+    cur.execute('''SELECT AVG(CAST(present AS FLOAT))*100 as attendance_rate
+                   FROM attendance
+                   WHERE subject_id IN (SELECT id FROM subjects WHERE teacher_id = ?)
+                   AND date >= date('now', '-30 days')''', (user_id,))
+    attendance_rate = cur.fetchone()['attendance_rate'] or 100
+    
+    return render_template('teacher_analytics.html',
+                         overall_average=round(overall_average, 1),
+                         total_assignments=total_assignments,
+                         total_students=total_students,
+                         attendance_rate=round(attendance_rate, 1))
 
 # --- Teacher Dashboard ---
 @app.route('/teacher_dashboard')

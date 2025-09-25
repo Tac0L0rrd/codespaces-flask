@@ -37,15 +37,55 @@
         <div class="dashboard-container card-3d">
             <h1>Teacher Settings</h1>
 
+            {% if error %}
+                <div class="error">{{ error }}</div>
+            {% endif %}
+            {% if success %}
+                <div class="success">{{ success }}</div>
+            {% endif %}
+
             <form method="POST" class="form-stack form-container">
-                <div>
-                    <label for="username">Username:</label>
-                    <input type="text" name="username" value="{{ username }}" required>
+                <div class="settings-section">
+                    <h3>Account Settings</h3>
+                    <div>
+                        <label for="username">Username:</label>
+                        <input type="text" name="username" value="{{ current_user.username }}" required>
+                    </div>
+
+                    <div>
+                        <label for="new_password">New Password (leave blank to keep current):</label>
+                        <input type="password" name="new_password">
+                    </div>
+
+                    <div>
+                        <label for="confirm_password">Confirm New Password:</label>
+                        <input type="password" name="confirm_password">
+                    </div>
                 </div>
 
-                <div>
-                    <label for="password">Password (leave blank to keep current):</label>
-                    <input type="password" name="password">
+                <div class="settings-section">
+                    <h3>Notification Preferences</h3>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="email_notifications" id="email_notifications" 
+                               {% if settings.email_notifications %}checked{% endif %}>
+                        <label for="email_notifications">Email Notifications</label>
+                        <small>Receive email updates for new assignments and grades</small>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="assignment_reminders" id="assignment_reminders" 
+                               {% if settings.assignment_reminders %}checked{% endif %}>
+                        <label for="assignment_reminders">Assignment Reminders</label>
+                        <small>Get reminders for upcoming assignment deadlines</small>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="attendance_reminders" id="attendance_reminders" 
+                               {% if settings.attendance_reminders %}checked{% endif %}>
+                        <label for="attendance_reminders">Attendance Reminders</label>
+                        <small>Receive reminders to mark daily attendance</small>
+                    </div>
                 </div>
 
                 <button class="btn-3d" type="submit">Save Changes</button>
@@ -53,6 +93,7 @@
 
             <div class="action-buttons">
                 <a class="btn-3d" href="/teacher_dashboard">Back to Dashboard</a>
+                <a class="btn-3d" href="/logout">Logout</a>
             </div>
         </div>
     </div>
