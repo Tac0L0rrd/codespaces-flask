@@ -1,19 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <link rel="stylesheet" href="/static/styles.css">
-    <title>Mark Attendance - EduBridge</title>
+    <title>Mark Attendance</title>
 </head>
 <body>
     <div class="navbar">
         <div class="navbar-container">
             <div class="navbar-links">
-                <a href="/teacher_dashboard" class="nav-link">Dashboard</a>
-                <a href="/teacher_analytics" class="nav-link">Analytics</a>
+                <a href="/mark_attendance" class="nav-link active">Mark Attendance</a>
                 <div class="dropdown">
-                    <a href="#" class="nav-link dropdown-trigger active">Classes</a>
+                    <a href="#" class="nav-link dropdown-trigger">Classes</a>
                     <div class="dropdown-content">
                         <a href="/manage_schedule">Manage Schedule</a>
                         <a href="/mark_attendance">Mark Attendance</a>
@@ -35,31 +32,35 @@
         </div>
     </div>
 
-    <div class="center-wrapper">
+    <div class="container">
         <div class="dashboard-container card-3d">
             <h1>Mark Attendance</h1>
-
+            
             <!-- Subject and Date Selection Form -->
-            <form method="GET" class="form-stack">
-                <label for="subject_id">Select Subject:</label>
-                <select name="subject_id" id="subject_id" onchange="this.form.submit()" required>
-                    <option value="" disabled {% if not selected_subject %}selected{% endif %}>Select Subject</option>
-                    {% for subject in subjects %}
-                    <option value="{{ subject['id'] }}" {% if selected_subject == subject['id']|string %}selected{% endif %}>
-                        {{ subject['name'] }}
-                    </option>
-                    {% endfor %}
-                </select>
-
-                <label for="date">Date:</label>
-                <input type="date" name="date" id="date" value="{{ selected_date }}" onchange="this.form.submit()" required>
+            <form method="GET" class="form-stack" style="max-width: 400px; margin: 0 auto 2em auto; text-align: center;">
+                <div>
+                    <label for="subject_id">Select Subject:</label>
+                    <select name="subject_id" id="subject_id" onchange="this.form.submit()" required>
+                        <option value="" disabled {% if not selected_subject %}selected{% endif %}>Select Subject</option>
+                        {% for subject in subjects %}
+                        <option value="{{ subject['id'] }}" {% if selected_subject == subject['id']|string %}selected{% endif %}>
+                            {{ subject['name'] }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="date">Date:</label>
+                    <input type="date" name="date" id="date" value="{{ selected_date }}" onchange="this.form.submit()" required>
+                </div>
             </form>
 
             {% if attendance_data %}
             <form method="POST" class="form-stack">
                 <input type="hidden" name="subject_id" value="{{ selected_subject }}">
                 <input type="hidden" name="date" value="{{ selected_date }}">
-
+                
                 <div class="table-wrapper">
                     <table>
                         <thead>

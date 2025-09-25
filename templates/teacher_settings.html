@@ -1,68 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <link rel="stylesheet" href="/static/styles.css">
-    <title>Teacher Settings - EduBridge</title>
-    <style>
-        .settings-section {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .settings-section h3 {
-            margin-top: 0;
-            color: #C0392B;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            padding-bottom: 10px;
-        }
-        .checkbox-group {
-            margin-bottom: 15px;
-            padding: 15px;
-            border-radius: 10px;
-            background: #ffd59d79;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-        }
-        .checkbox-group label {
-            font-weight: bold;
-            color: #C0392B;
-            margin-left: 10px;
-        }
-        .checkbox-group small {
-            display: block;
-            margin-left: 25px;
-            color: #C0392B;
-            font-style: italic;
-        }
-        .error-message {
-            background: rgba(231, 76, 60, 0.2);
-            border: 1px solid #E74C3C;
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        .success-message {
-            background: rgba(46, 204, 113, 0.2);
-            border: 1px solid #2ECC71;
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-    </style>
+    <title>Teacher Settings</title>
 </head>
 <body>
-
+    
    <div class="navbar">
         <div class="navbar-container">
             <div class="navbar-links">
-                <a href="/teacher_dashboard" class="nav-link">Dashboard</a>
-                <a href="/teacher_analytics" class="nav-link">Analytics</a>
+                <a href="/teacher_settings" class="nav-link active">Settings</a>
                 <div class="dropdown">
                     <a href="#" class="nav-link dropdown-trigger">Classes</a>
                     <div class="dropdown-content">
@@ -80,67 +27,32 @@
                         <a href="/teacher_reports">View Reports</a>
                     </div>
                 </div>
-                <a href="/teacher_settings" class="nav-link active">Settings</a>
+                <a href="/teacher_settings" class="nav-link">Settings</a>
                 <a href="/logout" class="nav-link">Logout</a>
             </div>
         </div>
     </div>
 
-    <div class="center-wrapper">
+    <div class="container">
         <div class="dashboard-container card-3d">
             <h1>Teacher Settings</h1>
 
-            {% if error %}
-                <div class="error-message">{{ error }}</div>
-            {% endif %}
-            {% if success %}
-                <div class="success-message">{{ success }}</div>
-            {% endif %}
-
-            <form method="POST" class="form-stack">
-                <div class="settings-section">
-                    <h3>Account Settings</h3>
+            <form method="POST" class="form-stack form-container">
+                <div>
                     <label for="username">Username:</label>
-                    <input type="text" name="username" value="{{ current_user.username }}" required class="form-input">
-
-                    <label for="new_password">New Password (leave blank to keep current):</label>
-                    <input type="password" name="new_password" class="form-input">
-
-                    <label for="confirm_password">Confirm New Password:</label>
-                    <input type="password" name="confirm_password" class="form-input">
+                    <input type="text" name="username" value="{{ username }}" required>
                 </div>
 
-                <div class="settings-section">
-                    <h3>📧 Notification Preferences</h3>
-                    
-                    <div class="checkbox-group">
-                        <input type="checkbox" name="email_notifications" id="email_notifications" 
-                               {% if settings.email_notifications %}checked{% endif %}>
-                        <label for="email_notifications">📬 Email Notifications</label>
-                        <small>Receive email updates for new assignments and grades</small>
-                    </div>
-
-                    <div class="checkbox-group">
-                        <input type="checkbox" name="assignment_reminders" id="assignment_reminders" 
-                               {% if settings.assignment_reminders %}checked{% endif %}>
-                        <label for="assignment_reminders">📝 Assignment Reminders</label>
-                        <small>Get reminders for upcoming assignment deadlines</small>
-                    </div>
-
-                    <div class="checkbox-group">
-                        <input type="checkbox" name="attendance_reminders" id="attendance_reminders" 
-                               {% if settings.attendance_reminders %}checked{% endif %}>
-                        <label for="attendance_reminders">📋 Attendance Reminders</label>
-                        <small>Receive reminders to mark daily attendance</small>
-                    </div>
+                <div>
+                    <label for="password">Password (leave blank to keep current):</label>
+                    <input type="password" name="password">
                 </div>
 
-                <button class="btn-3d" type="submit">💾 Save Settings</button>
+                <button class="btn-3d" type="submit">Save Changes</button>
             </form>
 
             <div class="action-buttons">
-                <a class="btn-3d" href="/teacher_dashboard">← Back to Dashboard</a>
-                <a class="btn-3d" href="/logout">Logout</a>
+                <a class="btn-3d" href="/teacher_dashboard">Back to Dashboard</a>
             </div>
         </div>
     </div>
