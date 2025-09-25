@@ -101,41 +101,6 @@ Use these demo accounts to explore the system:
 - **Schedule**: Class period and time management
 - **User Settings**: Personalized notification preferences
 
-## 🚀 Quick Start
-
-### Local Development
-
-```bash
-# Clone the repository
-git clone https://github.com/Tac0L0rrd/codespaces-flask.git
-
-# Navigate to project directory
-cd codespaces-flask
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the application
-python app.py
-
-# Access at http://localhost:5000
-```
-
-### Production Deployment
-
-#### Vercel Deployment (Recommended)
-
-1. Fork this repository
-2. Connect to [Vercel](https://vercel.com)
-3. Import your repository
-4. Deploy automatically with included `vercel.json` configuration
-5. Demo data initializes automatically on first run
-
-#### Alternative Deployments
-- **Railway**: One-click deployment with `railway.json`
-- **Render**: Compatible with included `Procfile`
-- **Heroku**: Standard Flask deployment process
-
 ## 🎯 Core Functionality
 
 ### 🔒 **Authentication & Security**
@@ -244,13 +209,19 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📄 License
+## 📄 License & Attribution
 
-This project is open source and available under the [MIT License](LICENSE).
+This project is developed by **Tac0L0rrd** and is available for educational purposes. 
+
+**⚠️ Important:** If you use, modify, or deploy this code, proper attribution is required:
+- Credit must be given to the original developer (Tac0L0rrd)
+- Link back to the original repository: https://github.com/Tac0L0rrd/codespaces-flask
+- Maintain this attribution notice in any derivatives
 
 ## 👨‍💻 Developer
 
 **Tac0L0rrd**
+
 - GitHub: [@Tac0L0rrd](https://github.com/Tac0L0rrd)
 - Portfolio: [TacoWorks](https://tacoworks.netlify.app)
 
