@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="stylesheet" href="/static/styles.css">
+    <title>Attendance Records - EduBridge</title>
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-links">
+                <a href="/student_dashboard" class="nav-link">Dashboard</a>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger active">Academic</a>
+                    <div class="dropdown-content">
+                        <a href="/student_progress">Progress Tracking</a>
+                        <a href="/student_attendance">Attendance Records</a>
+                    </div>
+                </div>
+                <a href="/logout" class="nav-link">Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="center-wrapper">
+        <div class="dashboard-container card-3d">
+            <h1>Attendance Records & Statistics</h1>
+            
+            <!-- Overall Statistics -->
+            <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
+                <div class="stat-card" style="background: rgba(46, 204, 113, 0.1); border: 1px solid rgba(46, 204, 113, 0.3); padding: 15px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: bold; color: #2ECC71;">{{ total_records }}</div>
+                    <div style="color: rgba(255,255,255,0.8);">Total Classes</div>
+                </div>
+                <div class="stat-card" style="background: rgba(52, 152, 219, 0.1); border: 1px solid rgba(52, 152, 219, 0.3); padding: 15px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: bold; color: #3498DB;">{{ subject_attendance|length }}</div>
+                    <div style="color: rgba(255,255,255,0.8);">Subjects Enrolled</div>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <h3>Subject Attendance Summary</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Classes Attended</th>
+                            <th>Total Classes</th>
+                            <th>Attendance Rate</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subject in subject_attendance %}
+                        <tr>
+                            <td>{{ subject.subject_name }}</td>
+                            <td>{{ subject.classes_present }}</td>
+                            <td>{{ subject.total_classes }}</td>
+                            <td>{{ subject.attendance_rate }}%</td>
+                            <td>
+                                {% if subject.attendance_rate >= 95 %}
+                                    <span style="color: #2ECC71;">🟢 Excellent</span>
+                                {% elif subject.attendance_rate >= 85 %}
+                                    <span style="color: #F39C12;">🟡 Good</span>
+                                {% elif subject.attendance_rate >= 75 %}
+                                    <span style="color: #E67E22;">🟠 Fair</span>
+                                {% else %}
+                                    <span style="color: #E74C3C;">🔴 Needs Improvement</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="table-wrapper">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3>Recent Attendance History</h3>
+                    <div style="color: rgba(255,255,255,0.6); font-size: 0.9em;">
+                        Showing {{ (page-1)*20 + 1 }} - {{ (page-1)*20 + attendance_records|length }} of {{ total_records }} records
+                    </div>
+                </div>
+                
+                <div style="max-height: 400px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px;">
+                    <table style="margin: 0;">
+                        <thead style="position: sticky; top: 0; background: rgba(192, 57, 43, 0.9); z-index: 1;">
+                            <tr>
+                                <th style="padding: 12px;">Date</th>
+                                <th style="padding: 12px;">Subject</th>
+                                <th style="padding: 12px;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if attendance_records %}
+                                {% for record in attendance_records %}
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                    <td style="padding: 10px;">{{ record.date }}</td>
+                                    <td style="padding: 10px;">{{ record.subject_name }}</td>
+                                    <td style="padding: 10px;">
+                                        {% if record.present %}
+                                            <span style="color: #2ECC71; font-weight: bold;">✓ Present</span>
+                                        {% else %}
+                                            <span style="color: #E74C3C; font-weight: bold;">✗ Absent</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="3" style="text-align: center; color: rgba(255,255,255,0.6); padding: 20px;">
+                                        No attendance records found.
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination Controls -->
+                {% if total_pages > 1 %}
+                <div style="display: flex; justify-content: center; align-items: center; margin-top: 20px; gap: 10px;">
+                    {% if has_prev %}
+                        <a href="?page={{ page-1 }}" class="btn-3d" style="padding: 8px 12px; font-size: 0.9em;">‹ Previous</a>
+                    {% endif %}
+                    
+                    <span style="color: rgba(255,255,255,0.8); margin: 0 15px;">
+                        Page {{ page }} of {{ total_pages }}
+                    </span>
+                    
+                    {% if has_next %}
+                        <a href="?page={{ page+1 }}" class="btn-3d" style="padding: 8px 12px; font-size: 0.9em;">Next ›</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="action-buttons">
+                <a class="btn-3d" href="/student_dashboard">← Back to Dashboard</a>
+                <a class="btn-3d" href="/student_progress">View Progress</a>
+                <a class="btn-3d" href="/logout">Logout</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

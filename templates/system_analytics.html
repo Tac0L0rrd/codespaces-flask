@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="stylesheet" href="/static/styles.css">
+    <title>System Analytics - EduBridge</title>
+</head>
+<body>
+    <div class="center-wrapper">
+        <div class="dashboard-container card-3d">
+            <h1>📊 System Analytics</h1>
+
+            <div class="table-wrapper">
+                <h3>School Overview</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Count</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Total Students</strong></td>
+                            <td>{{ total_students }}</td>
+                            <td>Active enrolled students</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total Teachers</strong></td>
+                            <td>{{ total_teachers }}</td>
+                            <td>Teaching staff members</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total Subjects</strong></td>
+                            <td>{{ total_subjects }}</td>
+                            <td>Available courses</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total Assignments</strong></td>
+                            <td>{{ total_assignments }}</td>
+                            <td>Created assignments</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Average Grade</strong></td>
+                            <td>{{ avg_grade|round(1) }}%</td>
+                            <td>School-wide performance</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Attendance Rate</strong></td>
+                            <td>{{ attendance_rate|round(1) }}%</td>
+                            <td>Overall student attendance</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            {% if subject_performance %}
+            <div class="table-wrapper">
+                <h3>Subject Performance</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Teacher</th>
+                            <th>Students</th>
+                            <th>Avg Grade</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subject in subject_performance %}
+                        <tr>
+                            <td>{{ subject.name }}</td>
+                            <td>{{ subject.teacher_name or 'Not Assigned' }}</td>
+                            <td>{{ subject.student_count }}</td>
+                            <td>{{ subject.avg_grade|round(1) }}%</td>
+                            <td>
+                                {% if subject.avg_grade >= 85 %}
+                                    <span style="color: #2ECC71;">🟢 Excellent</span>
+                                {% elif subject.avg_grade >= 75 %}
+                                    <span style="color: #F39C12;">🟡 Good</span>
+                                {% else %}
+                                    <span style="color: #E74C3C;">🔴 Needs Attention</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            <div class="action-buttons">
+                <a class="btn-3d" href="/admin">Back to Dashboard</a>
+                <a class="btn-3d" href="/logout">Logout</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

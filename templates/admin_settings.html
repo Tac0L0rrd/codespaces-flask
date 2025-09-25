@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="stylesheet" href="/static/styles.css">
+    <title>System Settings - EduBridge</title>
+    <style>
+        .settings-section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .settings-section h3 {
+            margin-top: 0;
+            color: #C0392B;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 10px;
+        }
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+        .setting-label {
+            flex: 1;
+            margin-right: 20px;
+        }
+        .setting-control {
+            min-width: 150px;
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #C0392B;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+    </style>
+</head>
+<body>
+    <div class="center-wrapper">
+        <div class="dashboard-container card-3d">
+            <h1>System Settings</h1>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        {% if category == 'success' %}
+                            <div class="success-message" style="background: rgba(46, 204, 113, 0.2); border: 1px solid #2ECC71; color: white; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
+                                {{ message }}
+                            </div>
+                        {% else %}
+                            <div class="error-message" style="background: rgba(231, 76, 60, 0.2); border: 1px solid #E74C3C; color: white; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
+                                {{ message }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST">
+                <div class="settings-section">
+                    <h3>General Settings</h3>
+                    
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <strong>School Name</strong>
+                            <div>Configure the school name displayed throughout the system</div>
+                        </div>
+                        <div class="setting-control">
+                            <input type="text" name="school_name" value="{{ settings.get('school_name', 'EduBridge Academy') }}" class="form-input">
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <strong>Academic Year</strong>
+                            <div>Current academic year</div>
+                        </div>
+                        <div class="setting-control">
+                            <input type="text" name="academic_year" value="{{ settings.get('academic_year', '2024-2025') }}" class="form-input">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Notification Settings</h3>
+                    
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <strong>Email Notifications</strong>
+                            <div>Send email notifications for assignments and grades</div>
+                        </div>
+                        <div class="setting-control">
+                            <label class="toggle-switch">
+                                <input type="checkbox" name="email_notifications" {% if settings.get('email_notifications', '1') == '1' %}checked{% endif %}>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <strong>SMS Notifications</strong>
+                            <div>Send SMS notifications for attendance</div>
+                        </div>
+                        <div class="setting-control">
+                            <label class="toggle-switch">
+                                <input type="checkbox" name="sms_notifications" {% if settings.get('sms_notifications', '0') == '1' %}checked{% endif %}>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Grade Settings</h3>
+                    
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <strong>Grading Scale</strong>
+                            <div>Select the grading scale for the school</div>
+                        </div>
+                        <div class="setting-control">
+                            <select name="grading_scale" class="form-input">
+                                <option value="percentage" {% if settings.get('grading_scale', 'percentage') == 'percentage' %}selected{% endif %}>Percentage (0-100)</option>
+                                <option value="letter" {% if settings.get('grading_scale', 'percentage') == 'letter' %}selected{% endif %}>Letter Grades (A-F)</option>
+                                <option value="gpa" {% if settings.get('grading_scale', 'percentage') == 'gpa' %}selected{% endif %}>GPA Scale (0-4.0)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <strong>Passing Grade</strong>
+                            <div>Minimum grade required to pass</div>
+                        </div>
+                        <div class="setting-control">
+                            <input type="number" name="passing_grade" value="{{ settings.get('passing_grade', '60') }}" min="0" max="100" class="form-input">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Security Settings</h3>
+                    
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <strong>Session Timeout</strong>
+                            <div>Automatic logout after inactivity (minutes)</div>
+                        </div>
+                        <div class="setting-control">
+                            <select name="session_timeout" class="form-input">
+                                <option value="30" {% if settings.get('session_timeout', '60') == '30' %}selected{% endif %}>30 minutes</option>
+                                <option value="60" {% if settings.get('session_timeout', '60') == '60' %}selected{% endif %}>1 hour</option>
+                                <option value="120" {% if settings.get('session_timeout', '60') == '120' %}selected{% endif %}>2 hours</option>
+                                <option value="240" {% if settings.get('session_timeout', '60') == '240' %}selected{% endif %}>4 hours</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <strong>Force Password Change</strong>
+                            <div>Require users to change passwords periodically</div>
+                        </div>
+                        <div class="setting-control">
+                            <label class="toggle-switch">
+                                <input type="checkbox" name="force_password_change" {% if settings.get('force_password_change', '0') == '1' %}checked{% endif %}>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button type="submit" class="btn-3d">Save Settings</button>
+                    <a class="btn-3d" href="/admin">Back to Dashboard</a>
+                    <a class="btn-3d" href="/logout">Logout</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

@@ -4,7 +4,7 @@ A comprehensive Flask-based web application for managing educational institution
 Features: User management, course enrollment, assignment tracking, attendance, and reporting.
 """
 
-from flask import Flask, render_template, request, redirect, session, url_for
+from flask import Flask, render_template, request, redirect, session, url_for, flash
 import sqlite3
 import os
 from datetime import datetime, date
@@ -18,6 +18,121 @@ DATABASE = os.path.join(os.path.dirname(__file__), 'school.db')
 def get_db():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
+    return conn
+
+# --- Grading System Functions ---
+def get_grading_scale():
+    """Get the current grading scale from settings"""
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT setting_value FROM system_settings WHERE setting_name = 'grading_scale'")
+    result = cur.fetchone()
+    conn.close()
+    return result['setting_value'] if result else 'percentage'
+
+def get_passing_grade():
+    """Get the current passing grade from settings"""
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT setting_value FROM system_settings WHERE setting_name = 'passing_grade'")
+    result = cur.fetchone()
+    conn.close()
+    return float(result['setting_value']) if result else 60.0
+
+def percentage_to_letter(percentage):
+    """Convert percentage to letter grade"""
+    if percentage >= 97: return 'A+'
+    elif percentage >= 93: return 'A'
+    elif percentage >= 90: return 'A-'
+    elif percentage >= 87: return 'B+'
+    elif percentage >= 83: return 'B'
+    elif percentage >= 80: return 'B-'
+    elif percentage >= 77: return 'C+'
+    elif percentage >= 73: return 'C'
+    elif percentage >= 70: return 'C-'
+    elif percentage >= 67: return 'D+'
+    elif percentage >= 63: return 'D'
+    elif percentage >= 60: return 'D-'
+    else: return 'F'
+
+def letter_to_percentage(letter):
+    """Convert letter grade to percentage (midpoint)"""
+    grade_map = {
+        'A+': 98.5, 'A': 95, 'A-': 91.5,
+        'B+': 88.5, 'B': 85, 'B-': 81.5,
+        'C+': 78.5, 'C': 75, 'C-': 71.5,
+        'D+': 68.5, 'D': 65, 'D-': 61.5,
+        'F': 50
+    }
+    return grade_map.get(letter, 0)
+
+def percentage_to_gpa(percentage):
+    """Convert percentage to 4.0 GPA scale"""
+    if percentage >= 97: return 4.0
+    elif percentage >= 93: return 4.0
+    elif percentage >= 90: return 3.7
+    elif percentage >= 87: return 3.3
+    elif percentage >= 83: return 3.0
+    elif percentage >= 80: return 2.7
+    elif percentage >= 77: return 2.3
+    elif percentage >= 73: return 2.0
+    elif percentage >= 70: return 1.7
+    elif percentage >= 67: return 1.3
+    elif percentage >= 65: return 1.0
+    elif percentage >= 60: return 0.7
+    else: return 0.0
+
+def gpa_to_percentage(gpa):
+    """Convert GPA to percentage (approximate)"""
+    if gpa >= 4.0: return 95
+    elif gpa >= 3.7: return 90
+    elif gpa >= 3.3: return 87
+    elif gpa >= 3.0: return 83
+    elif gpa >= 2.7: return 80
+    elif gpa >= 2.3: return 77
+    elif gpa >= 2.0: return 73
+    elif gpa >= 1.7: return 70
+    elif gpa >= 1.3: return 67
+    elif gpa >= 1.0: return 65
+    elif gpa >= 0.7: return 60
+    else: return 50
+
+def format_grade(grade, target_scale=None):
+    """Format grade according to the specified or current grading scale"""
+    if grade is None or grade == '':
+        return 'N/A'
+    
+    try:
+        # Convert grade to float if it's not already
+        if isinstance(grade, str):
+            grade = float(grade)
+    except (ValueError, TypeError):
+        return 'N/A'
+    
+    # Get target scale (use current system setting if not specified)
+    if target_scale is None:
+        target_scale = get_grading_scale()
+    
+    # Assume input is always in percentage, convert to target scale
+    if target_scale == 'letter':
+        return percentage_to_letter(grade)
+    elif target_scale == 'gpa':
+        return f"{percentage_to_gpa(grade):.1f}"
+    else:  # percentage
+        return f"{grade:.1f}%"
+
+def is_passing_grade(grade):
+    """Check if a grade is passing based on current settings"""
+    if grade is None:
+        return False
+    
+    try:
+        grade_value = float(grade)
+    except (ValueError, TypeError):
+        return False
+    
+    passing_threshold = get_passing_grade()
+    return grade_value >= passing_threshold
 
     # Create tables if they don't exist
     cur = conn.cursor()
@@ -223,6 +338,125 @@ def admin_dashboard():
         return redirect(url_for('login'))
     return render_template('admin_dashboard.html')
 
+@app.route('/system_analytics')
+def system_analytics():
+    if not is_admin():
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cur = conn.cursor()
+    
+    # Get current grading scale
+    grading_scale = get_grading_scale()
+    
+    # Get overall statistics
+    cur.execute("SELECT COUNT(*) FROM users WHERE role='student'")
+    total_students = cur.fetchone()[0]
+    
+    cur.execute("SELECT COUNT(*) FROM users WHERE role='teacher'")
+    total_teachers = cur.fetchone()[0]
+    
+    cur.execute("SELECT COUNT(*) FROM subjects")
+    total_subjects = cur.fetchone()[0]
+    
+    cur.execute("SELECT COUNT(*) FROM assignments")
+    total_assignments = cur.fetchone()[0]
+    
+    # Get average grades
+    cur.execute("SELECT AVG(grade) FROM assignments WHERE grade IS NOT NULL")
+    avg_grade = cur.fetchone()[0] or 0
+    
+    # Get attendance rate
+    cur.execute("SELECT AVG(present) FROM attendance")
+    attendance_rate = (cur.fetchone()[0] or 0) * 100
+    
+    # Get subject performance with teacher info and student counts
+    cur.execute("""
+        SELECT s.name, 
+               u.username as teacher_name, 
+               AVG(a.grade) as avg_grade, 
+               COUNT(DISTINCT a.id) as assignment_count,
+               COUNT(DISTINCT e.user_id) as student_count
+        FROM subjects s
+        LEFT JOIN users u ON s.teacher_id = u.id
+        LEFT JOIN assignments a ON s.id = a.subject_id AND a.grade IS NOT NULL
+        LEFT JOIN enrollments e ON s.id = e.subject_id
+        GROUP BY s.id, s.name, u.username
+        ORDER BY avg_grade DESC
+    """)
+    subject_performance = cur.fetchall()
+    
+    conn.close()
+    
+    return render_template('system_analytics.html',
+                         total_students=total_students,
+                         total_teachers=total_teachers,
+                         total_subjects=total_subjects,
+                         total_assignments=total_assignments,
+                         avg_grade=round(avg_grade, 1),
+                         formatted_avg_grade=format_grade(avg_grade, grading_scale),
+                         attendance_rate=round(attendance_rate, 1),
+                         subject_performance=subject_performance,
+                         grading_scale=grading_scale,
+                         format_grade=format_grade)
+
+@app.route('/admin_settings', methods=['GET', 'POST'])
+def admin_settings():
+    if not is_admin():
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        try:
+            conn = get_db()
+            cur = conn.cursor()
+            
+            # Extract form data
+            school_name = request.form.get('school_name', 'EduBridge Academy')
+            academic_year = request.form.get('academic_year', '2024-2025')
+            email_notifications = 1 if request.form.get('email_notifications') else 0
+            sms_notifications = 1 if request.form.get('sms_notifications') else 0
+            grading_scale = request.form.get('grading_scale', 'percentage')
+            passing_grade = request.form.get('passing_grade', '60')
+            session_timeout = request.form.get('session_timeout', '60')
+            force_password_change = 1 if request.form.get('force_password_change') else 0
+            
+            # Save each setting to the database
+            settings = [
+                ('school_name', school_name),
+                ('academic_year', academic_year),
+                ('email_notifications', str(email_notifications)),
+                ('sms_notifications', str(sms_notifications)),
+                ('grading_scale', grading_scale),
+                ('passing_grade', passing_grade),
+                ('session_timeout', session_timeout),
+                ('force_password_change', str(force_password_change))
+            ]
+            
+            for setting_name, setting_value in settings:
+                cur.execute('''INSERT OR REPLACE INTO system_settings (setting_name, setting_value, updated_at)
+                               VALUES (?, ?, CURRENT_TIMESTAMP)''', (setting_name, setting_value))
+            
+            conn.commit()
+            conn.close()
+            
+            print(f"DEBUG: Successfully saved admin settings to database - school_name: {school_name}, academic_year: {academic_year}")
+            flash("✅ Settings saved successfully to database!", "success")
+            return redirect(url_for('admin_settings'))
+            
+        except Exception as e:
+            print(f"DEBUG: Error in admin_settings: {str(e)}")
+            flash(f"❌ Error saving settings: {str(e)}", "error")
+            return redirect(url_for('admin_settings'))
+    
+    # Load current settings from database for GET request
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT setting_name, setting_value FROM system_settings")
+    settings_data = dict(cur.fetchall())
+    conn.close()
+    
+    return render_template('admin_settings.html', settings=settings_data)
+
 # --- Admin: Users / Subjects / Assignments / Schedule ---
 @app.route('/manage_users', methods=['GET','POST'])
 def manage_users():
@@ -419,6 +653,166 @@ def edit_grade():
     return redirect(url_for('manage_assignments'))
 
 # --- Student Dashboard ---
+@app.route('/student_progress')
+def student_progress():
+    if not is_student():
+        return redirect(url_for('login'))
+    
+    user_id = session['user_id']
+    conn = get_db()
+    cur = conn.cursor()
+
+    # Get current grading scale
+    grading_scale = get_grading_scale()
+
+    # Get student's subjects and grades
+    cur.execute('''SELECT subjects.name as subject, subjects.id,
+                          users.username as teacher_name,
+                          COALESCE(AVG(assignments.grade), 0) as avg_grade
+                   FROM enrollments
+                   JOIN subjects ON enrollments.subject_id = subjects.id
+                   LEFT JOIN users ON subjects.teacher_id = users.id
+                   LEFT JOIN assignments ON assignments.subject_id = subjects.id
+                   AND assignments.user_id = ?
+                   WHERE enrollments.user_id = ?
+                   GROUP BY subjects.id''', (user_id, user_id))
+    
+    subjects = []
+    total_grade = 0
+    for s in cur.fetchall():
+        # Get assignments for this subject
+        cur.execute('''SELECT * FROM assignments 
+                      WHERE subject_id = ? AND user_id = ?
+                      ORDER BY id DESC''', (s['id'], user_id))
+        assignments = cur.fetchall()
+        
+        avg_grade = s['avg_grade'] if s['avg_grade'] else 0
+        total_grade += avg_grade
+        
+        subjects.append({
+            'subject': s['subject'],
+            'id': s['id'],
+            'teacher': s['teacher_name'],
+            'avg_grade': avg_grade,
+            'assignments': assignments,
+            'formatted_avg_grade': format_grade(avg_grade, grading_scale),
+            'is_passing': is_passing_grade(avg_grade)
+        })
+    
+    overall_grade = total_grade / len(subjects) if subjects else 0
+    
+    # Calculate recent performance (last 10 assignments)
+    cur.execute('''SELECT AVG(grade) as recent_avg FROM (
+                      SELECT grade FROM assignments 
+                      WHERE user_id = ? AND grade > 0
+                      ORDER BY id DESC LIMIT 10
+                   )''', (user_id,))
+    recent_avg = cur.fetchone()
+    avg_recent_grade = recent_avg['recent_avg'] if recent_avg['recent_avg'] else 0
+    
+    # Calculate improvement (compare recent vs older grades)
+    cur.execute('''SELECT AVG(grade) as old_avg FROM (
+                      SELECT grade FROM assignments 
+                      WHERE user_id = ? AND grade > 0
+                      ORDER BY id DESC LIMIT 20 OFFSET 10
+                   )''', (user_id,))
+    old_avg = cur.fetchone()
+    old_average = old_avg['old_avg'] if old_avg['old_avg'] else avg_recent_grade
+    improvement_percentage = avg_recent_grade - old_average
+    
+    # Count recent assignments
+    cur.execute('''SELECT COUNT(*) as count FROM assignments 
+                   WHERE user_id = ? AND date(id) >= date('now', '-30 days')''', (user_id,))
+    recent_assignments = cur.fetchone()
+    recent_assignments_count = recent_assignments['count'] if recent_assignments else 0
+    
+    # Get attendance statistics
+    cur.execute('''SELECT COUNT(*) as total_days,
+                          SUM(present) as days_present,
+                          ROUND(AVG(CAST(present AS FLOAT)) * 100, 1) as attendance_rate
+                   FROM attendance 
+                   WHERE user_id = ?''', (user_id,))
+    attendance_data = cur.fetchone()
+    
+    total_days = attendance_data['total_days'] if attendance_data['total_days'] else 1
+    days_present = attendance_data['days_present'] if attendance_data['days_present'] else 0
+    overall_attendance = attendance_data['attendance_rate'] if attendance_data['attendance_rate'] else 100
+    
+    # Calculate grade trend (simple comparison)
+    grade_trend = improvement_percentage  # positive = improving, negative = declining
+    
+    return render_template('student_progress.html',
+                         subjects=subjects,
+                         overall_grade=overall_grade,
+                         formatted_overall_grade=format_grade(overall_grade, grading_scale),
+                         avg_recent_grade=avg_recent_grade,
+                         formatted_recent_grade=format_grade(avg_recent_grade, grading_scale),
+                         improvement_percentage=improvement_percentage,
+                         recent_assignments_count=recent_assignments_count,
+                         total_days=total_days,
+                         days_present=days_present,
+                         overall_attendance=overall_attendance,
+                         grade_trend=grade_trend,
+                         grading_scale=grading_scale,
+                         format_grade=format_grade,
+                         is_passing_grade=is_passing_grade)
+
+@app.route('/student_attendance')
+def student_attendance():
+    if not is_student():
+        return redirect(url_for('login'))
+    
+    user_id = session['user_id']
+    conn = get_db()
+    cur = conn.cursor()
+    
+    # Get pagination parameters
+    page = request.args.get('page', 1, type=int)
+    per_page = 20  # Show 20 records per page
+    offset = (page - 1) * per_page
+
+    # Get total count of attendance records
+    cur.execute('''SELECT COUNT(*) FROM attendance WHERE user_id = ?''', (user_id,))
+    total_records = cur.fetchone()[0]
+    
+    # Get recent attendance records with pagination
+    cur.execute('''SELECT subjects.name as subject_name,
+                          attendance.date,
+                          attendance.present,
+                          subjects.id as subject_id
+                   FROM attendance
+                   JOIN subjects ON attendance.subject_id = subjects.id
+                   WHERE attendance.user_id = ?
+                   ORDER BY attendance.date DESC
+                   LIMIT ? OFFSET ?''', (user_id, per_page, offset))
+    attendance_records = cur.fetchall()
+    
+    # Get attendance statistics by subject
+    cur.execute('''SELECT subjects.name as subject_name,
+                          COUNT(*) as total_classes,
+                          SUM(present) as classes_present,
+                          ROUND(AVG(CAST(present AS FLOAT)) * 100, 1) as attendance_rate
+                   FROM attendance
+                   JOIN subjects ON attendance.subject_id = subjects.id
+                   WHERE attendance.user_id = ?
+                   GROUP BY subjects.id, subjects.name
+                   ORDER BY subjects.name''', (user_id,))
+    subject_attendance = cur.fetchall()
+    
+    # Calculate pagination info
+    total_pages = (total_records + per_page - 1) // per_page
+    has_prev = page > 1
+    has_next = page < total_pages
+    
+    return render_template('student_attendance.html',
+                         attendance_records=attendance_records,
+                         subject_attendance=subject_attendance,
+                         page=page,
+                         total_pages=total_pages,
+                         has_prev=has_prev,
+                         has_next=has_next,
+                         total_records=total_records)
+
 @app.route('/student_dashboard')
 def student_dashboard():
     if not is_student():
@@ -427,6 +821,9 @@ def student_dashboard():
     username = session['username']
     conn = get_db()
     cur = conn.cursor()
+
+    # Get current grading scale
+    grading_scale = get_grading_scale()
 
     # Get subjects the student is enrolled in
     cur.execute('''SELECT DISTINCT
@@ -463,7 +860,9 @@ def student_dashboard():
             'id': s['id'],
             'teacher': s['teacher_name'],
             'avg_grade': avg_grade,
-            'assignments': assignments
+            'formatted_avg_grade': format_grade(avg_grade, grading_scale),
+            'assignments': assignments,
+            'is_passing': is_passing_grade(avg_grade)
         })
 
     # Create schedule table if it doesn't exist
@@ -515,7 +914,9 @@ def student_dashboard():
                          username=username,
                          subject_grades=subject_grades,
                          schedule=schedule,
-                         attendance_stats=attendance_stats)
+                         attendance_stats=attendance_stats,
+                         grading_scale=grading_scale,
+                         format_grade=format_grade)
 
 # --- Subject Page ---
 @app.route('/subject/<int:subject_id>')
@@ -541,6 +942,9 @@ def teacher_dashboard():
     user_id = session['user_id']
     conn = get_db()
     cur = conn.cursor()
+
+    # Get current grading scale
+    grading_scale = get_grading_scale()
 
     # Get all subjects assigned to the teacher
     cur.execute('''SELECT DISTINCT subjects.id, subjects.name
@@ -601,7 +1005,10 @@ def teacher_dashboard():
                            active_assignments=active_assignments,
                            attendance_rate=attendance_rate,
                            average_grade=average_grade,
-                           recent_activity=recent_activity)
+                           formatted_average_grade=format_grade(average_grade, grading_scale),
+                           recent_activity=recent_activity,
+                           grading_scale=grading_scale,
+                           format_grade=format_grade)
 
 # --- Add Assignment ---
 @app.route('/add_assignment', methods=['GET','POST'])
@@ -642,6 +1049,9 @@ def enter_grades():
     cur.execute('''SELECT id, name FROM subjects WHERE teacher_id = ?''', (user_id,))
     subjects = cur.fetchall()
 
+    # Get current grading scale
+    grading_scale = get_grading_scale()
+
     # Get all students and their assignments for each subject
     students_assignments = []
     for subject in subjects:
@@ -667,8 +1077,23 @@ def enter_grades():
         student_id = request.form['student_id']
         subject_id = request.form['subject_id']
         assignment_name = request.form.get('assignment_name')
-        grade = request.form.get('grade')
+        grade_input = request.form.get('grade')
         assignment_id = request.form.get('assignment_id')
+
+        # Convert grade input to percentage for storage (always store as percentage)
+        if grade_input:
+            try:
+                if grading_scale == 'letter':
+                    grade = letter_to_percentage(grade_input.upper())
+                elif grading_scale == 'gpa':
+                    grade = gpa_to_percentage(float(grade_input))
+                else:  # percentage
+                    grade = float(grade_input)
+            except (ValueError, TypeError):
+                flash("❌ Invalid grade format", "error")
+                return redirect(url_for('enter_grades'))
+        else:
+            grade = None
 
         if assignment_id:  # Update existing assignment
             cur.execute('''UPDATE assignments
@@ -680,11 +1105,14 @@ def enter_grades():
                           VALUES (?, ?, ?, ?)''',
                           (assignment_name, grade, subject_id, student_id))
         conn.commit()
+        flash("✅ Grade saved successfully!", "success")
         return redirect(url_for('enter_grades'))
 
     return render_template('enter_grades.html',
                          subjects=subjects,
-                         students_assignments=students_assignments)
+                         students_assignments=students_assignments,
+                         grading_scale=grading_scale,
+                         format_grade=format_grade)
 
 # --- Mark Attendance ---
 @app.route('/mark_attendance', methods=['GET','POST'])
@@ -907,6 +1335,168 @@ def teacher_settings():
     return render_template('teacher_settings.html', username=username)
 
 # --- Teacher Reports ---
+@app.route('/teacher_analytics')
+def teacher_analytics():
+    if not is_teacher():
+        return redirect(url_for('login'))
+    
+    user_id = session['user_id']
+    conn = get_db()
+    cur = conn.cursor()
+
+    # Get current grading scale
+    grading_scale = get_grading_scale()
+
+    # Get comprehensive analytics for teacher's classes
+    
+    # Overall performance metrics
+    cur.execute('''SELECT AVG(CAST(assignments.grade AS FLOAT)) as overall_avg,
+                          COUNT(DISTINCT assignments.id) as total_assignments,
+                          COUNT(DISTINCT enrollments.user_id) as total_students
+                   FROM assignments
+                   JOIN subjects ON assignments.subject_id = subjects.id
+                   JOIN enrollments ON enrollments.subject_id = subjects.id
+                   WHERE subjects.teacher_id = ? AND assignments.grade > 0''', (user_id,))
+    overview = cur.fetchone()
+    
+    overall_average = overview['overall_avg'] if overview['overall_avg'] else 0
+    total_assignments = overview['total_assignments'] if overview['total_assignments'] else 0
+    total_students = overview['total_students'] if overview['total_students'] else 0
+    
+    # Grade distribution (using current grading scale ranges)
+    grade_distribution = {}
+    if grading_scale == 'letter':
+        grade_distribution = {'A': 0, 'B': 0, 'C': 0, 'D': 0, 'F': 0}
+    elif grading_scale == 'gpa':
+        grade_distribution = {'4.0-3.5': 0, '3.4-2.5': 0, '2.4-1.5': 0, '1.4-1.0': 0, 'Below 1.0': 0}
+    else:  # percentage
+        grade_distribution = {'90-100%': 0, '80-89%': 0, '70-79%': 0, 'Below 70%': 0}
+    
+    cur.execute('''SELECT assignments.grade
+                   FROM assignments
+                   JOIN subjects ON assignments.subject_id = subjects.id
+                   WHERE subjects.teacher_id = ? AND assignments.grade > 0''', (user_id,))
+    grades = cur.fetchall()
+    
+    for grade_row in grades:
+        grade = grade_row['grade']
+        if grading_scale == 'letter':
+            letter_grade = percentage_to_letter(grade)
+            if letter_grade.startswith('A'):
+                grade_distribution['A'] += 1
+            elif letter_grade.startswith('B'):
+                grade_distribution['B'] += 1
+            elif letter_grade.startswith('C'):
+                grade_distribution['C'] += 1
+            elif letter_grade.startswith('D'):
+                grade_distribution['D'] += 1
+            else:
+                grade_distribution['F'] += 1
+        elif grading_scale == 'gpa':
+            gpa_grade = percentage_to_gpa(grade)
+            if gpa_grade >= 3.5:
+                grade_distribution['4.0-3.5'] += 1
+            elif gpa_grade >= 2.5:
+                grade_distribution['3.4-2.5'] += 1
+            elif gpa_grade >= 1.5:
+                grade_distribution['2.4-1.5'] += 1
+            elif gpa_grade >= 1.0:
+                grade_distribution['1.4-1.0'] += 1
+            else:
+                grade_distribution['Below 1.0'] += 1
+        else:  # percentage
+            if grade >= 90:
+                grade_distribution['90-100%'] += 1
+            elif grade >= 80:
+                grade_distribution['80-89%'] += 1
+            elif grade >= 70:
+                grade_distribution['70-79%'] += 1
+            else:
+                grade_distribution['Below 70%'] += 1
+    
+    # Subject performance
+    cur.execute('''SELECT subjects.name,
+                          AVG(CAST(assignments.grade AS FLOAT)) as avg_grade,
+                          COUNT(DISTINCT enrollments.user_id) as student_count
+                   FROM subjects
+                   LEFT JOIN assignments ON subjects.id = assignments.subject_id
+                   LEFT JOIN enrollments ON subjects.id = enrollments.subject_id
+                   WHERE subjects.teacher_id = ?
+                   GROUP BY subjects.id''', (user_id,))
+    subject_performance = cur.fetchall()
+    
+    # Attendance analytics
+    cur.execute('''SELECT AVG(CAST(attendance.present AS FLOAT)) * 100 as attendance_rate,
+                          COUNT(CASE WHEN attendance.present = 0 THEN 1 END) as absences
+                   FROM attendance
+                   JOIN subjects ON attendance.subject_id = subjects.id
+                   WHERE subjects.teacher_id = ?''', (user_id,))
+    attendance_data = cur.fetchone()
+    attendance_rate = attendance_data['attendance_rate'] if attendance_data['attendance_rate'] else 100
+    
+    # Count frequently absent students (more than 3 absences)
+    cur.execute('''SELECT COUNT(DISTINCT attendance.user_id) as absent_count
+                   FROM attendance
+                   JOIN subjects ON attendance.subject_id = subjects.id
+                   WHERE subjects.teacher_id = ? 
+                   GROUP BY attendance.user_id
+                   HAVING COUNT(CASE WHEN attendance.present = 0 THEN 1 END) > 3''', (user_id,))
+    absent_result = cur.fetchone()
+    absent_students = absent_result['absent_count'] if absent_result else 0
+    
+    # Recent activities (last 10 graded assignments)
+    cur.execute('''SELECT users.username as student_name,
+                          assignments.name as assignment_name,
+                          assignments.grade
+                   FROM assignments
+                   JOIN subjects ON assignments.subject_id = subjects.id
+                   JOIN users ON assignments.user_id = users.id
+                   WHERE subjects.teacher_id = ? AND assignments.grade > 0
+                   ORDER BY assignments.id DESC
+                   LIMIT 10''', (user_id,))
+    recent_activities = cur.fetchall()
+    
+    # Performance improvement trend (compare last 30 days vs previous 30 days)
+    cur.execute('''SELECT AVG(CAST(grade AS FLOAT)) as recent_avg
+                   FROM assignments
+                   JOIN subjects ON assignments.subject_id = subjects.id
+                   WHERE subjects.teacher_id = ? AND assignments.grade > 0
+                   AND assignments.id > (
+                       SELECT COUNT(*) * 0.7 FROM assignments a2 
+                       JOIN subjects s2 ON a2.subject_id = s2.id 
+                       WHERE s2.teacher_id = ?
+                   )''', (user_id, user_id))
+    recent_avg = cur.fetchone()
+    
+    cur.execute('''SELECT AVG(CAST(grade AS FLOAT)) as older_avg
+                   FROM assignments
+                   JOIN subjects ON assignments.subject_id = subjects.id
+                   WHERE subjects.teacher_id = ? AND assignments.grade > 0
+                   AND assignments.id <= (
+                       SELECT COUNT(*) * 0.7 FROM assignments a2 
+                       JOIN subjects s2 ON a2.subject_id = s2.id 
+                       WHERE s2.teacher_id = ?
+                   )''', (user_id, user_id))
+    older_avg = cur.fetchone()
+    
+    recent_average = recent_avg['recent_avg'] if recent_avg['recent_avg'] else overall_average
+    older_average = older_avg['older_avg'] if older_avg['older_avg'] else overall_average
+    improvement_trend = recent_average - older_average
+    
+    return render_template('teacher_analytics.html',
+                         overall_average=overall_average,
+                         formatted_overall_average=format_grade(overall_average, grading_scale),
+                         total_assignments=total_assignments,
+                         total_students=total_students,
+                         grade_distribution=grade_distribution,
+                         subject_performance=subject_performance,
+                         attendance_rate=attendance_rate,
+                         absent_students=absent_students,
+                         recent_activities=recent_activities,
+                         improvement_trend=improvement_trend,
+                         grading_scale=grading_scale,
+                         format_grade=format_grade)
+
 @app.route('/teacher_reports')
 def teacher_reports():
     if not is_teacher():
@@ -914,6 +1504,9 @@ def teacher_reports():
     user_id = session['user_id']
     conn = get_db()
     cur = conn.cursor()
+
+    # Get current grading scale
+    grading_scale = get_grading_scale()
 
     # Get total students in teacher's subjects
     cur.execute('''SELECT COUNT(DISTINCT enrollments.user_id) AS total_students
@@ -952,7 +1545,10 @@ def teacher_reports():
                            total_students=total_students,
                            total_assignments=total_assignments,
                            average_grade=round(average_grade, 1) if average_grade else 0,
-                           class_reports=class_reports)
+                           formatted_average_grade=format_grade(average_grade, grading_scale),
+                           class_reports=class_reports,
+                           grading_scale=grading_scale,
+                           format_grade=format_grade)
 
 # --- Manage Schedule ---
 @app.route('/manage_schedule', methods=['GET', 'POST'])

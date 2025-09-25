@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="stylesheet" href="/static/styles.css">
+    <title>Advanced Teacher Analytics - EduBridge</title>
+</head>
+<body>
+        <div class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-links">
+                <a href="/teacher_dashboard" class="nav-link">Dashboard</a>
+                <a href="/teacher_analytics" class="nav-link active">Analytics</a>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Classes</a>
+                    <div class="dropdown-content">
+                        <a href="/manage_schedule">Manage Schedule</a>
+                        <a href="/mark_attendance">Mark Attendance</a>
+                        <a href="/enter_grades">Enter Grades</a>
+                        <a href="/manage_students">Enroll Students</a>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Assignments</a>
+                    <div class="dropdown-content">
+                        <a href="/add_assignment">Add Assignment</a>
+                        <a href="/manage_assignments">Manage Assignments</a>
+                        <a href="/teacher_reports">View Reports</a>
+                    </div>
+                </div>
+                <a href="/teacher_settings" class="nav-link">Settings</a>
+                <a href="/logout" class="nav-link">Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="center-wrapper">
+        <div class="dashboard-container card-3d">
+            <h1>📊 Advanced Teacher Analytics</h1>
+
+            <div class="table-wrapper">
+                <h3>Class Performance Overview</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Value</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Overall Class Average</strong></td>
+                            <td>{{ overall_average|round(1) }}%</td>
+                            <td>Average across all assignments</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total Assignments</strong></td>
+                            <td>{{ total_assignments }}</td>
+                            <td>Created assignments</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Students Enrolled</strong></td>
+                            <td>{{ total_students }}</td>
+                            <td>Across all subjects</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Attendance Rate</strong></td>
+                            <td>{{ attendance_rate|round(1) }}%</td>
+                            <td>Overall class attendance</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Frequently Absent</strong></td>
+                            <td>{{ absent_students }}</td>
+                            <td>Students with 3+ absences</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Performance Trend</strong></td>
+                            <td>{{ improvement_trend|round(1) }}%</td>
+                            <td>
+                                {% if improvement_trend > 0 %}
+                                    <span style="color: #2ECC71;">📈 Improving</span>
+                                {% elif improvement_trend < -5 %}
+                                    <span style="color: #E74C3C;">📉 Declining</span>
+                                {% else %}
+                                    <span style="color: #F39C12;">➡️ Stable</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="table-wrapper">
+                <h3>Grade Distribution</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Grade Range</th>
+                            <th>Student Count</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for grade_range, count in grade_distribution.items() %}
+                        <tr>
+                            <td>{{ grade_range }}</td>
+                            <td>{{ count }} students</td>
+                            <td>
+                                {% if grade_range.startswith('90') %}
+                                    <span style="color: #2ECC71;">🟢 Excellent</span>
+                                {% elif grade_range.startswith('80') %}
+                                    <span style="color: #3498DB;">🔵 Good</span>
+                                {% elif grade_range.startswith('70') %}
+                                    <span style="color: #F39C12;">� Average</span>
+                                {% else %}
+                                    <span style="color: #E74C3C;">🔴 Needs Help</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="table-wrapper">
+                <h3>Subject Performance</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Average Grade</th>
+                            <th>Student Count</th>
+                            <th>Performance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subject in subject_performance %}
+                        <tr>
+                            <td>{{ subject.name }}</td>
+                            <td>{{ subject.avg_grade|round(1) }}%</td>
+                            <td>{{ subject.student_count }}</td>
+                            <td>
+                                {% if subject.avg_grade >= 85 %}
+                                    <span style="color: #2ECC71;">🟢 Excellent</span>
+                                {% elif subject.avg_grade >= 75 %}
+                                    <span style="color: #F39C12;">🟡 Good</span>
+                                {% else %}
+                                    <span style="color: #E74C3C;">🔴 Needs Attention</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="table-wrapper">
+                <h3>Recent Activity</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Assignment</th>
+                            <th>Grade</th>
+                            <th>Performance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for activity in recent_activities %}
+                        <tr>
+                            <td>{{ activity.student_name }}</td>
+                            <td>{{ activity.assignment_name }}</td>
+                            <td>{{ activity.grade }}%</td>
+                            <td>
+                                {% if activity.grade >= 90 %}
+                                    <span style="color: #2ECC71;">� Excellent</span>
+                                {% elif activity.grade >= 80 %}
+                                    <span style="color: #3498DB;">🔵 Good</span>
+                                {% elif activity.grade >= 70 %}
+                                    <span style="color: #F39C12;">🟡 Average</span>
+                                {% else %}
+                                    <span style="color: #E74C3C;">🔴 Poor</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="action-buttons">
+                <a class="btn-3d" href="/teacher_dashboard">← Back to Dashboard</a>
+                <a class="btn-3d" href="/teacher_reports">View Reports</a>
+                <a class="btn-3d" href="/logout">Logout</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

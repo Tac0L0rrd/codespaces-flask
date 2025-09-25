@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="stylesheet" href="/static/styles.css">
+    <title>Enter Grades - EduBridge</title>
+    <style>
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 10px; text-align: left; border: 1px solid #ddd; }
+        th { background-color: rgba(255, 255, 255, 0.1); color: white; }
+        .grade-input { width: 100px; padding: 5px; text-align: center; }
+        .subject-section { margin-bottom: 30px; }
+        .grading-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .grade-display {
+            font-weight: bold;
+            color: #2ECC71;
+        }
+        .passing { color: #2ECC71; }
+        .failing { color: #E74C3C; }
+    </style>
+    <script>
+        function getGradeInput(gradingScale) {
+            if (gradingScale === 'letter') {
+                return `<select name="grade" class="grade-input" required>
+                    <option value="">Select Grade</option>
+                    <option value="A+">A+</option>
+                    <option value="A">A</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B">B</option>
+                    <option value="B-">B-</option>
+                    <option value="C+">C+</option>
+                    <option value="C">C</option>
+                    <option value="C-">C-</option>
+                    <option value="D+">D+</option>
+                    <option value="D">D</option>
+                    <option value="D-">D-</option>
+                    <option value="F">F</option>
+                </select>`;
+            } else if (gradingScale === 'gpa') {
+                return `<input type="number" name="grade" placeholder="GPA" class="grade-input" min="0" max="4.0" step="0.1" required>`;
+            } else {
+                return `<input type="number" name="grade" placeholder="%" class="grade-input" min="0" max="100" step="0.1" required>`;
+            }
+        }
+    </script>
+</head>
+<body>
+    <!-- Navbar -->
+        <div class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-links">
+                <a href="/teacher_dashboard" class="nav-link">Dashboard</a>
+                <a href="/teacher_analytics" class="nav-link">Analytics</a>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger active">Classes</a>
+                    <div class="dropdown-content">
+                        <a href="/manage_schedule">Manage Schedule</a>
+                        <a href="/mark_attendance">Mark Attendance</a>
+                        <a href="/enter_grades">Enter Grades</a>
+                        <a href="/manage_students">Enroll Students</a>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Assignments</a>
+                    <div class="dropdown-content">
+                        <a href="/add_assignment">Add Assignment</a>
+                        <a href="/manage_assignments">Manage Assignments</a>
+                        <a href="/teacher_reports">View Reports</a>
+                    </div>
+                </div>
+                <a href="/teacher_settings" class="nav-link">Settings</a>
+                <a href="/logout" class="nav-link">Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="center-wrapper">
+        <div class="dashboard-container card-3d">
+            <h1>Enter Grades</h1>
+
+            {% for subject in subjects %}
+            <div class="subject-section">
+                <h2>{{ subject['name'] }}</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Assignments & Grades</th>
+                            <th>Add New Assignment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set filtered_assignments = students_assignments|selectattr('subject_name', 'equalto', subject['name'])|list %}
+                        {% set ns = namespace(last_student='') %}
+
+                        {% for item in filtered_assignments %}
+                            {% if item['student_name'] != ns.last_student %}
+                                {% if ns.last_student != '' %}
+                                    </td>
+                                    <td>
+                                        <form method="post" style="display: inline;">
+                                            <input type="hidden" name="student_id" value="{{ item['student_id'] }}">
+                                            <input type="hidden" name="subject_id" value="{{ subject['id'] }}">
+                                            <input type="text" name="assignment_name" placeholder="Assignment name" required>
+                                            <input type="number" name="grade" placeholder="Grade" class="grade-input" min="0" max="100" required>
+                                            <button type="submit" class="btn-3d">Add</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td>{{ item['student_name'] }}</td>
+                                    <td>
+                            {% endif %}
+
+                            {% if item['assignment_name'] %}
+                                <form method="post" style="display: inline-block; margin-right: 15px;">
+                                    <input type="hidden" name="assignment_id" value="{{ item['assignment_id'] }}">
+                                    <input type="hidden" name="student_id" value="{{ item['student_id'] }}">
+                                    <input type="hidden" name="subject_id" value="{{ subject['id'] }}">
+                                    {{ item['assignment_name'] }}:
+                                    <input type="number" name="grade" value="{{ item['grade'] }}" class="grade-input" min="0" max="100" required>
+                                    <button type="submit" class="btn-3d">Update</button>
+                                </form>
+                            {% endif %}
+
+                            {% set ns.last_student = item['student_name'] %}
+                        {% endfor %}
+
+                        {% if filtered_assignments %}
+                            </td>
+                            <td>
+                                <form method="post" style="display: inline;">
+                                    <input type="hidden" name="student_id" value="{{ filtered_assignments[-1]['student_id'] }}">
+                                    <input type="hidden" name="subject_id" value="{{ subject['id'] }}">
+                                    <input type="text" name="assignment_name" placeholder="Assignment name" required>
+                                    <input type="number" name="grade" placeholder="Grade" class="grade-input" min="0" max="100" required>
+                                    <button type="submit" class="btn-3d">Add</button>
+                                </form>
+                            </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+            {% endfor %}
+
+            <div class="action-buttons">
+                <a class="btn-3d" href="/teacher_dashboard">Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
