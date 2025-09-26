@@ -412,6 +412,11 @@ input[name="username"] {
     width: 250px !important;
 }
 
+input[type="password"] {
+    max-width: 250px !important;
+    width: 250px !important;
+}
+
 .grade-input {
     max-width: 80px !important;
     width: 80px !important;
