@@ -3,8 +3,8 @@ Flask==2.3.3
 
 # Advanced Features Dependencies
 # Email service
-smtplib  # Built-in Python module
-email  # Built-in Python module
+# smtplib  # Built-in Python module
+# email  # Built-in Python module
 
 # Real-time features (WebSocket)
 flask-socketio>=5.0.0
@@ -31,7 +31,7 @@ babel>=2.12.0
 
 # LMS Integration
 requests>=2.31.0  # Already included above for API calls
-xml  # Built-in Python module
+# xml  # Built-in Python module
 
 # Development and testing
 pytest>=7.4.0
