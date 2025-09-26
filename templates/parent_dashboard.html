@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parent Portal - EduBridge</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-links">
+                <a href="/parent_dashboard" class="nav-link active">Dashboard</a>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Children</a>
+                    <div class="dropdown-content">
+                        {% for child in children %}
+                        <a href="/parent_child_progress/{{ child.id }}">
+                            <span class="dropdown-item-icon">👨‍🎓</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">{{ child.full_name or child.username }}</span>
+                                <span class="dropdown-item-description">View detailed progress</span>
+                            </span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger communication-link">
+                        Communication
+                        {% if unread_messages > 0 %}
+                        <span class="notification-badge">{{ unread_messages }}</span>
+                        {% endif %}
+                    </a>
+                    <div class="dropdown-content">
+                        <a href="/parent_messages">
+                            <span class="dropdown-item-icon">💬</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Messages</span>
+                                <span class="dropdown-item-description">View teacher messages and send replies</span>
+                            </span>
+                        </a>
+                        <a href="/parent_message_teacher">
+                            <span class="dropdown-item-icon">📝</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Message Teacher</span>
+                                <span class="dropdown-item-description">Send a message to a teacher</span>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="navbar-actions">
+                <a href="/logout" class="nav-btn">Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="center-wrapper">
+            <div class="dashboard-container card-3d">
+                <h1>👨‍👩‍👧‍👦 Parent Portal</h1>
+                <p>Monitor your children's academic progress and stay connected with their education.</p>
+
+                {% if notifications %}
+                <div class="notifications-section card-3d">
+                    <h3>📢 Recent Notifications</h3>
+                    <div class="notifications-grid">
+                        {% for notification in notifications[:3] %}
+                        <div class="notification-item {% if not notification.is_read %}unread{% endif %}">
+                            <div class="notification-header">
+                                <strong>{{ notification.title }}</strong>
+                                <span class="notification-date">{{ notification.created_at[:10] }}</span>
+                            </div>
+                            <div class="notification-content">
+                                <p><strong>{{ notification.student_name }}:</strong> {{ notification.message }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if children %}
+                <div class="children-overview">
+                    <h3>👨‍👩‍👧‍👦 Your Children</h3>
+                    <div class="children-grid">
+                        {% for child in children %}
+                        <div class="child-card card-3d">
+                            <div class="child-header">
+                                <h4>{{ child.full_name or child.username }}</h4>
+                                <span class="relationship-badge">{{ child.relationship }}</span>
+                            </div>
+                            
+                            <div class="child-stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-value">
+                                        {% if child.progress.overall_stats.overall_average %}
+                                            {{ "%.0f"|format(child.progress.overall_stats.overall_average) }}%
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </div>
+                                    <div class="stat-label">Overall Average</div>
+                                </div>
+                                
+                                <div class="stat-card">
+                                    <div class="stat-value">
+                                        {% if child.progress.attendance_stats.attendance_rate %}
+                                            {{ "%.0f"|format(child.progress.attendance_stats.attendance_rate) }}%
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </div>
+                                    <div class="stat-label">Attendance</div>
+                                </div>
+                                
+                                <div class="stat-card">
+                                    <div class="stat-value">{{ child.subjects|length }}</div>
+                                    <div class="stat-label">Subjects</div>
+                                </div>
+                                
+                                <div class="stat-card">
+                                    <div class="stat-value">{{ child.progress.overall_stats.total_assignments or 0 }}</div>
+                                    <div class="stat-label">Assignments</div>
+                                </div>
+                            </div>
+                            
+                            {% if child.recent_grades %}
+                            <div class="recent-grades">
+                                <h5>Recent Grades:</h5>
+                                {% for grade in child.recent_grades[:2] %}
+                                <div class="grade-item">
+                                    <span class="grade-subject">{{ grade.subject_name }}</span>
+                                    <span class="grade-score">{{ grade.grade }}%</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            
+                            <div class="child-actions">
+                                <a href="/parent_child_progress/{{ child.id }}" class="btn-3d">
+                                    View Full Report
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="no-children-message card-3d">
+                    <h3>No Children Linked</h3>
+                    <p>No children are currently linked to your account.</p>
+                    <p>Please contact the school administrator to link your children to your parent account.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .children-overview {
+            margin: 2rem 0;
+        }
+        
+        .children-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .child-card {
+            position: relative;
+        }
+        
+        .child-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+        
+        .child-header h4 {
+            margin: 0;
+            color: #262626;
+            font-size: 1.1rem;
+        }
+        
+        .relationship-badge {
+            background: rgba(50, 131, 184, 0.1);
+            color: #3283b8;
+            padding: 0.25rem 0.75rem;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .child-stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin: 1rem 0;
+        }
+        
+        .stat-card {
+            background: rgba(248, 249, 250, 0.7);
+            padding: 0.75rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #262626;
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .recent-grades {
+            margin: 1rem 0;
+            padding: 0.75rem;
+            background: rgba(248, 249, 250, 0.5);
+            border-radius: 6px;
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+        
+        .recent-grades h5 {
+            margin: 0 0 0.5rem 0;
+            color: #666;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .grade-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 0.25rem 0;
+            padding: 0.25rem;
+        }
+        
+        .grade-subject {
+            color: #666;
+            font-size: 0.85rem;
+        }
+        
+        .grade-score {
+            font-weight: 600;
+            color: #3283b8;
+            font-size: 0.85rem;
+        }
+        
+        .child-actions {
+            margin-top: 1rem;
+        }
+        
+        .notifications-section {
+            margin: 2rem 0;
+        }
+        
+        .notifications-grid {
+            display: grid;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        
+        .notification-item {
+            background: rgba(255, 243, 205, 0.3);
+            border: 1px solid rgba(255, 193, 7, 0.2);
+            border-radius: 8px;
+            padding: 0.75rem;
+            border-left: 3px solid #ffc107;
+        }
+        
+        .notification-item.unread {
+            background: rgba(255, 152, 0, 0.08);
+            border-left-color: #ff9800;
+        }
+        
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .notification-header strong {
+            color: #262626;
+            font-size: 0.9rem;
+        }
+        
+        .notification-date {
+            color: #666;
+            font-size: 0.8rem;
+        }
+        
+        .notification-content p {
+            margin: 0;
+            color: #666;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+        
+        .no-children-message {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+        
+        .no-children-message h3 {
+            color: #262626;
+            margin-bottom: 1rem;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .children-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .child-stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 0.5rem;
+            }
+            
+            .notification-badge {
+                position: absolute;
+                top: -8px;
+                right: -8px;
+                background: #ff3b30;
+                color: white;
+                border-radius: 50%;
+                padding: 2px 6px;
+                font-size: 0.65em;
+                font-weight: bold;
+                min-width: 16px;
+                height: 16px;
+                text-align: center;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid white;
+                box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            }
+            
+            .communication-link {
+                position: relative;
+                display: inline-block;
+            }
+        }
+    </style>
+</body>
+</html>

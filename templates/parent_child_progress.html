@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Child Progress - EduBridge Parent Portal</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-links">
+                <a href="/parent_dashboard" class="nav-link">Dashboard</a>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger active">Progress Report</a>
+                    <div class="dropdown-content">
+                        <a href="/parent_dashboard">
+                            <span class="dropdown-item-icon">🏠</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Back to Dashboard</span>
+                                <span class="dropdown-item-description">Return to main view</span>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="navbar-actions">
+                <a href="/logout" class="nav-btn">Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="center-wrapper">
+            {% if student_data.student_info %}
+            <div class="dashboard-container card-3d">
+                <h1>📊 {{ student_data.student_info.full_name or student_data.student_info.username }}'s Progress</h1>
+                <p>Comprehensive academic progress report</p>
+
+                <!-- Progress Summary -->
+                <div class="summary-section">
+                    <h3>📈 Academic Summary</h3>
+                    <div class="summary-grid">
+                        <div class="summary-card card-3d">
+                            <div class="metric-value">
+                                {% if student_data.progress_summary.overall_stats.overall_average %}
+                                    {{ "%.0f"|format(student_data.progress_summary.overall_stats.overall_average) }}%
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </div>
+                            <div class="metric-label">Overall Average</div>
+                        </div>
+                        
+                        <div class="summary-card card-3d">
+                            <div class="metric-value">{{ student_data.progress_summary.overall_stats.total_assignments or 0 }}</div>
+                            <div class="metric-label">Total Assignments</div>
+                        </div>
+                        
+                        <div class="summary-card card-3d">
+                            <div class="metric-value">
+                                {% if student_data.progress_summary.attendance_stats.attendance_rate %}
+                                    {{ "%.0f"|format(student_data.progress_summary.attendance_stats.attendance_rate) }}%
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </div>
+                            <div class="metric-label">Attendance Rate</div>
+                        </div>
+                        
+                        <div class="summary-card card-3d">
+                            <div class="metric-value">{{ student_data.subjects|length }}</div>
+                            <div class="metric-label">Subjects Enrolled</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-tabs">
+                    <div class="tab-navigation">
+                        <button class="tab-btn active" data-tab="overview">📊 Overview</button>
+                        <button class="tab-btn" data-tab="grades">🎯 Grades</button>
+                        <button class="tab-btn" data-tab="attendance">📅 Attendance</button>
+                        <button class="tab-btn" data-tab="subjects">📚 Subjects</button>
+                    </div>
+
+                    <!-- Overview Tab -->
+                    <div class="tab-content active" id="overview">
+                        {% if student_data.progress_summary.subject_averages %}
+                        <div class="subjects-section card-3d">
+                            <h3>📚 Subject Performance</h3>
+                            <div class="subjects-list">
+                                {% for subject in student_data.progress_summary.subject_averages %}
+                                <div class="subject-item">
+                                    <div class="subject-info">
+                                        <span class="subject-name">{{ subject.subject_name }}</span>
+                                        <span class="assignment-count">{{ subject.assignment_count }} assignments</span>
+                                    </div>
+                                    <div class="subject-grade">{{ "%.0f"|format(subject.subject_average) }}%</div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Grades Tab -->
+                    <div class="tab-content" id="grades">
+                        {% if student_data.grades %}
+                        <div class="grades-section card-3d">
+                            <h3>🎯 All Grades</h3>
+                            <div class="grades-table">
+                                <div class="table-header">
+                                    <div class="th">Subject</div>
+                                    <div class="th">Type</div>
+                                    <div class="th">Grade</div>
+                                    <div class="th">Date</div>
+                                    <div class="th">Teacher</div>
+                                </div>
+                                {% for grade in student_data.grades %}
+                                <div class="table-row">
+                                    <div class="td">{{ grade.subject_name }}</div>
+                                    <div class="td">{{ grade.assignment_type or 'Assignment' }}</div>
+                                    <div class="td grade-score">{{ grade.grade }}%</div>
+                                    <div class="td">{{ grade.created_at[:10] if grade.created_at else 'N/A' }}</div>
+                                    <div class="td">{{ grade.teacher_name or 'N/A' }}</div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Attendance Tab -->
+                    <div class="tab-content" id="attendance">
+                        {% if student_data.attendance %}
+                        <div class="attendance-section card-3d">
+                            <h3>📅 Attendance Records</h3>
+                            <div class="attendance-stats">
+                                <p><strong>Last 30 Days:</strong> 
+                                    {{ student_data.progress_summary.attendance_stats.present_days or 0 }} present out of 
+                                    {{ student_data.progress_summary.attendance_stats.total_days or 0 }} total days
+                                    ({{ "%.0f"|format(student_data.progress_summary.attendance_stats.attendance_rate) if student_data.progress_summary.attendance_stats.attendance_rate else 0 }}%)
+                                </p>
+                            </div>
+                            
+                            <div class="attendance-table">
+                                <div class="table-header">
+                                    <div class="th">Date</div>
+                                    <div class="th">Subject</div>
+                                    <div class="th">Status</div>
+                                </div>
+                                {% for attendance in student_data.attendance %}
+                                <div class="table-row">
+                                    <div class="td">{{ attendance.date }}</div>
+                                    <div class="td">{{ attendance.subject_name }}</div>
+                                    <div class="td">
+                                        {% if attendance.present %}
+                                            <span class="status-present">✓ Present</span>
+                                        {% else %}
+                                            <span class="status-absent">✗ Absent</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Subjects Tab -->
+                    <div class="tab-content" id="subjects">
+                        {% if student_data.subjects %}
+                        <div class="subjects-detail-section card-3d">
+                            <h3>📖 Enrolled Subjects</h3>
+                            <div class="subjects-detail-grid">
+                                {% for subject in student_data.subjects %}
+                                <div class="subject-detail-card">
+                                    <div class="subject-detail-header">
+                                        <h4>{{ subject.name }}</h4>
+                                        <span class="teacher-name">{{ subject.teacher_name or 'No teacher assigned' }}</span>
+                                    </div>
+                                    {% if subject.description %}
+                                    <p class="subject-description">{{ subject.description }}</p>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <a class="btn-3d" href="/parent_dashboard">Back to Dashboard</a>
+                </div>
+            </div>
+
+            {% else %}
+            <div class="dashboard-container card-3d">
+                <h2>Student information not found</h2>
+                <p>Unable to load progress data for this student.</p>
+                <div class="action-buttons">
+                    <a href="/parent_dashboard" class="btn-3d">Return to Dashboard</a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const targetTab = this.getAttribute('data-tab');
+                    
+                    // Remove active class from all tabs and contents
+                    tabBtns.forEach(b => b.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to clicked tab and corresponding content
+                    this.classList.add('active');
+                    document.getElementById(targetTab).classList.add('active');
+                });
+            });
+        });
+    </script>
+
+    <style>
+        .summary-section {
+            margin: 2rem 0;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .summary-card {
+            text-align: center;
+            padding: 1.25rem;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #262626;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-label {
+            color: #666;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        /* Tab Navigation */
+        .progress-tabs {
+            margin: 2rem 0;
+        }
+        
+        .tab-navigation {
+            display: flex;
+            background: rgba(248, 249, 250, 0.8);
+            border-radius: 8px;
+            padding: 0.25rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            font-weight: 500;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+        
+        .tab-btn:hover {
+            background: rgba(255,255,255,0.5);
+            color: #262626;
+        }
+        
+        .tab-btn.active {
+            background: white;
+            color: #262626;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Table Styles */
+        .grades-table, .attendance-table {
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.06);
+            margin-top: 1rem;
+        }
+        
+        .table-header {
+            display: grid;
+            grid-template-columns: 2fr 1.5fr 1fr 1fr 1.5fr;
+            background: rgba(248, 249, 250, 0.8);
+            font-weight: 600;
+            color: #262626;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+        
+        .attendance-table .table-header {
+            grid-template-columns: 1fr 2fr 1fr;
+        }
+        
+        .th {
+            padding: 0.75rem;
+            font-size: 0.85rem;
+        }
+        
+        .table-row {
+            display: grid;
+            grid-template-columns: 2fr 1.5fr 1fr 1fr 1.5fr;
+            border-bottom: 1px solid rgba(0,0,0,0.04);
+            transition: background 0.2s ease;
+        }
+        
+        .attendance-table .table-row {
+            grid-template-columns: 1fr 2fr 1fr;
+        }
+        
+        .table-row:hover {
+            background: rgba(248, 249, 250, 0.3);
+        }
+        
+        .table-row:last-child {
+            border-bottom: none;
+        }
+        
+        .td {
+            padding: 0.75rem;
+            font-size: 0.85rem;
+            color: #666;
+            display: flex;
+            align-items: center;
+        }
+        
+        .td.grade-score {
+            font-weight: 600;
+            color: #3283b8;
+            justify-content: center;
+        }
+        
+        .subjects-section, .grades-section, .attendance-section, .subjects-detail-section {
+            padding: 1.5rem;
+        }
+        
+        .subjects-list {
+            margin-top: 1rem;
+        }
+        
+        .subject-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            background: rgba(248, 249, 250, 0.5);
+            border-radius: 6px;
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+        
+        .subject-info {
+            flex: 1;
+        }
+        
+        .subject-name {
+            display: block;
+            font-weight: 600;
+            color: #262626;
+            font-size: 0.9rem;
+        }
+        
+        .assignment-count {
+            display: block;
+            color: #666;
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+        
+        .subject-grade {
+            font-weight: 700;
+            color: #3283b8;
+            font-size: 1.1rem;
+        }
+        
+        .attendance-stats {
+            background: rgba(248, 249, 250, 0.7);
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+        
+        .attendance-stats p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .status-present {
+            color: #22c55e;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        
+        .status-absent {
+            color: #ef4444;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        
+        .subjects-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .subject-detail-card {
+            background: rgba(248, 249, 250, 0.5);
+            border: 1px solid rgba(0,0,0,0.04);
+            border-radius: 6px;
+            padding: 1rem;
+        }
+        
+        .subject-detail-header h4 {
+            margin: 0 0 0.5rem 0;
+            color: #262626;
+        }
+        
+        .teacher-name {
+            color: #666;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .subject-description {
+            margin: 0.75rem 0 0 0;
+            color: #666;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            background: rgba(255,255,255,0.5);
+            padding: 0.75rem;
+            border-radius: 4px;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .tab-navigation {
+                flex-wrap: wrap;
+            }
+            
+            .tab-btn {
+                font-size: 0.8rem;
+                padding: 0.5rem 0.75rem;
+            }
+            
+            .table-header, .table-row {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+            
+            .th, .td {
+                padding: 0.5rem;
+                border-bottom: 1px solid rgba(0,0,0,0.04);
+            }
+            
+            .th::before {
+                content: attr(data-label) ": ";
+                font-weight: 600;
+                color: #262626;
+            }
+            
+            .subjects-detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</body>
+</html>

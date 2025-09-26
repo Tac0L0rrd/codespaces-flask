@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <link rel="stylesheet" href="/static/styles.css">
     <title>Teacher Dashboard - EduBridge</title>
@@ -15,31 +14,75 @@
                 <div class="dropdown">
                     <a href="#" class="nav-link dropdown-trigger">Classes</a>
                     <div class="dropdown-content">
-                        <a href="/manage_schedule">Manage Schedule</a>
-                        <a href="/mark_attendance">Mark Attendance</a>
-                        <a href="/enter_grades">Enter Grades</a>
-                        <a href="/manage_students">Enroll Students</a>
+                        <a href="/manage_schedule">
+                            <span class="dropdown-item-icon">📅</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Manage Schedule</span>
+                                <span class="dropdown-item-description">Create and edit class schedules</span>
+                            </span>
+                        </a>
+                        <a href="/mark_attendance">
+                            <span class="dropdown-item-icon">✅</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Mark Attendance</span>
+                                <span class="dropdown-item-description">Track student attendance</span>
+                            </span>
+                        </a>
+                        <a href="/enter_grades">
+                            <span class="dropdown-item-icon">📊</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Enter Grades</span>
+                                <span class="dropdown-item-description">Record student grades</span>
+                            </span>
+                        </a>
+                        <a href="/manage_students">
+                            <span class="dropdown-item-icon">👥</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Enroll Students</span>
+                                <span class="dropdown-item-description">Manage student enrollments</span>
+                            </span>
+                        </a>
                     </div>
                 </div>
                 <div class="dropdown">
                     <a href="#" class="nav-link dropdown-trigger">Assignments</a>
                     <div class="dropdown-content">
-                        <a href="/add_assignment">Add Assignment</a>
-                        <a href="/manage_assignments">Manage Assignments</a>
+                        <a href="/add_assignment">
+                            <span class="dropdown-item-icon">➕</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Add Assignment</span>
+                                <span class="dropdown-item-description">Create new assignments</span>
+                            </span>
+                        </a>
+                        <a href="/manage_assignments">
+                            <span class="dropdown-item-icon">📝</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Manage Assignments</span>
+                                <span class="dropdown-item-description">Edit and organize assignments</span>
+                            </span>
+                        </a>
                     </div>
                 </div>
                 <div class="dropdown">
-                    <a href="#" class="nav-link dropdown-trigger">Analytics</a>
+                    <a href="#" class="nav-link dropdown-trigger">Communication</a>
                     <div class="dropdown-content">
-                        <a href="/teacher_analytics">View Analytics</a>
-                        <a href="/teacher_reports">View Reports</a>
+                        <a href="/teacher_messages">
+                            <span class="dropdown-item-icon">�</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Messages</span>
+                                <span class="dropdown-item-description">Communicate with parents</span>
+                            </span>
+                        </a>
                     </div>
                 </div>
                 <a href="/teacher_settings" class="nav-link">Settings</a>
-                <a href="/logout" class="nav-link">Logout</a>
+            </div>
+            <div class="navbar-actions">
+                <a href="/logout" class="nav-btn">Logout</a>
             </div>
         </div>
     </div>
+    <div class="main-content">
     <div class="center-wrapper">
         <div class="dashboard-container card-3d">
             <h1>Teacher Dashboard</h1>
@@ -96,5 +139,33 @@
             </div>
         </div>
     </div>
+    </div>
+    
+    <style>
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ff3b30;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 0.65em;
+            font-weight: bold;
+            min-width: 16px;
+            height: 16px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid white;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        .communication-link {
+            position: relative;
+            display: inline-block;
+        }
+    </style>
 </body>
 </html>

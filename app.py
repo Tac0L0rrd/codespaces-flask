@@ -3,6 +3,64 @@ import sqlite3
 import os
 from datetime import datetime, date
 
+# Import advanced feature modules with error handling
+try:
+    from email_service import EmailService, register_email_routes
+    EMAIL_AVAILABLE = True
+except ImportError as e:
+    print(f"Email service not available: {e}")
+    EMAIL_AVAILABLE = False
+
+try:
+    from parent_portal import register_parent_routes
+    PARENT_PORTAL_AVAILABLE = True
+except ImportError as e:
+    print(f"Parent portal not available: {e}")
+    PARENT_PORTAL_AVAILABLE = False
+
+try:
+    from advanced_analytics import register_analytics_routes
+    ANALYTICS_AVAILABLE = True
+except ImportError as e:
+    print(f"Advanced analytics not available: {e}")
+    ANALYTICS_AVAILABLE = False
+
+try:
+    from api_module import register_api
+    API_AVAILABLE = True
+except ImportError as e:
+    print(f"API module not available: {e}")
+    API_AVAILABLE = False
+
+try:
+    from realtime_module import init_socketio, socketio, notify_new_grade, notify_assignment_created
+    REALTIME_AVAILABLE = True
+except ImportError as e:
+    print(f"Real-time features not available: {e}")
+    REALTIME_AVAILABLE = False
+    socketio = None
+
+try:
+    from export_module import register_export_routes
+    EXPORT_AVAILABLE = True
+except ImportError as e:
+    print(f"Export functionality not available: {e}")
+    EXPORT_AVAILABLE = False
+
+try:
+    from i18n_module import register_i18n_routes, t, get_current_language
+    I18N_AVAILABLE = True
+except ImportError as e:
+    print(f"Multi-language support not available: {e}")
+    I18N_AVAILABLE = False
+
+try:
+    from lms_integration import register_lms_routes
+    LMS_AVAILABLE = True
+except ImportError as e:
+    print(f"LMS integration not available: {e}")
+    LMS_AVAILABLE = False
+
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 DATABASE = os.path.join(os.path.dirname(__file__), 'school.db')
@@ -201,6 +259,58 @@ def system_analytics():
                          avg_grade=round(avg_grade, 1),
                          attendance_rate=round(attendance_rate, 1),
                          subject_performance=subject_performance)
+
+@app.route('/admin_settings', methods=['GET', 'POST'])
+def admin_settings():
+    if not is_admin():
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        try:
+            conn = get_db()
+            cur = conn.cursor()
+            
+            # Extract form data
+            school_name = request.form.get('school_name', 'EduBridge Academy')
+            academic_year = request.form.get('academic_year', '2024-2025')
+            email_notifications = 1 if request.form.get('email_notifications') else 0
+            sms_notifications = 1 if request.form.get('sms_notifications') else 0
+            grading_scale = request.form.get('grading_scale', 'percentage')
+            passing_grade = request.form.get('passing_grade', '60')
+            session_timeout = request.form.get('session_timeout', '60')
+            force_password_change = 1 if request.form.get('force_password_change') else 0
+            
+            # Save settings
+            settings_data = [
+                ('school_name', school_name),
+                ('academic_year', academic_year),
+                ('email_notifications', str(email_notifications)),
+                ('sms_notifications', str(sms_notifications)),
+                ('grading_scale', grading_scale),
+                ('passing_grade', passing_grade),
+                ('session_timeout', session_timeout),
+                ('force_password_change', str(force_password_change))
+            ]
+            
+            for setting_name, setting_value in settings_data:
+                cur.execute('''INSERT OR REPLACE INTO system_settings 
+                              (setting_name, setting_value) VALUES (?, ?)''', 
+                              (setting_name, setting_value))
+            
+            conn.commit()
+            return redirect(url_for('admin_settings'))
+            
+        except Exception as e:
+            print(f"Error saving settings: {e}")
+            return redirect(url_for('admin_settings'))
+    
+    # Load current settings
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT setting_name, setting_value FROM system_settings")
+    settings = dict(cur.fetchall())
+    
+    return render_template('admin_settings.html', settings=settings)
 
 @app.route('/system_settings', methods=['GET', 'POST'])
 def system_settings():
@@ -723,13 +833,18 @@ def teacher_dashboard():
                    ORDER BY assignments.id DESC LIMIT 5''', (user_id,))
     recent_activity = [f"Assignment '{r['name']}' in {r['subject_name']}" for r in cur.fetchall()]
 
+    # Get unread message count
+    from parent_portal import parent_portal
+    unread_messages = parent_portal.get_unread_message_count(user_id, 'teacher')
+
     return render_template('teacher_dashboard.html',
                            my_classes=my_classes,
                            students_count=students_count,
                            active_assignments=active_assignments,
                            attendance_rate=attendance_rate,
                            average_grade=average_grade,
-                           recent_activity=recent_activity)
+                           recent_activity=recent_activity,
+                           unread_messages=unread_messages)
 
 # --- Add Assignment ---
 @app.route('/add_assignment', methods=['GET','POST'])
@@ -1170,6 +1285,61 @@ def init_db():
 
     pass
 
+# Register advanced feature modules
+if EMAIL_AVAILABLE:
+    register_email_routes(app)
+    print("✓ Email service module loaded")
+
+if PARENT_PORTAL_AVAILABLE:
+    register_parent_routes(app)
+    print("✓ Parent portal module loaded")
+
+if ANALYTICS_AVAILABLE:
+    register_analytics_routes(app)
+    print("✓ Advanced analytics module loaded")
+
+if API_AVAILABLE:
+    register_api(app)
+    print("✓ API module loaded")
+
+if EXPORT_AVAILABLE:
+    register_export_routes(app)
+    print("✓ Export functionality module loaded")
+
+if I18N_AVAILABLE:
+    register_i18n_routes(app)
+    print("✓ Multi-language support module loaded")
+
+if LMS_AVAILABLE:
+    register_lms_routes(app)
+    print("✓ LMS integration module loaded")
+
+# Initialize real-time features
+if REALTIME_AVAILABLE:
+    init_socketio(app)
+    print("✓ Real-time features (WebSocket) module loaded")
+
+# Add template globals for advanced features
+@app.template_global()
+def feature_available(feature_name):
+    """Check if a feature is available"""
+    return {
+        'email': EMAIL_AVAILABLE,
+        'parent_portal': PARENT_PORTAL_AVAILABLE,
+        'analytics': ANALYTICS_AVAILABLE,
+        'api': API_AVAILABLE,
+        'realtime': REALTIME_AVAILABLE,
+        'export': EXPORT_AVAILABLE,
+        'i18n': I18N_AVAILABLE,
+        'lms': LMS_AVAILABLE
+    }.get(feature_name, False)
+
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True)
+    print("\n=== Education Management System Starting ===")
+    print("Basic features: ✓ Authentication, ✓ Student/Teacher Management, ✓ Grades, ✓ Attendance")
+    
+    if REALTIME_AVAILABLE and socketio:
+        socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+    else:
+        app.run(debug=True, host='0.0.0.0', port=5000)

@@ -7,22 +7,55 @@
     <title>Enroll Students - EduBridge</title>
 </head>
 <body>
-
+    <!-- Navbar -->
     <div class="navbar">
         <div class="navbar-container">
             <div class="navbar-links">
-                <a href="/teacher_dashboard" class="nav-link">Dashboard</a>
-                <a href="/teacher_analytics" class="nav-link">Analytics</a>
+                <a href="/admin_dashboard" class="nav-link">Dashboard</a>
                 <div class="dropdown">
-                    <a href="#" class="nav-link dropdown-trigger active">Classes</a>
+                    <a href="#" class="nav-link dropdown-trigger active">Management</a>
                     <div class="dropdown-content">
-                        <a href="/manage_schedule">Manage Schedule</a>
-                        <a href="/mark_attendance">Mark Attendance</a>
-                        <a href="/enter_grades">Enter Grades</a>
-                        <a href="/manage_students">Enroll Students</a>
+                        <a href="/manage_users">
+                            <span class="dropdown-item-icon">👥</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Manage Users</span>
+                                <span class="dropdown-item-description">Add and manage user accounts</span>
+                            </span>
+                        </a>
+                        <a href="/manage_subjects">
+                            <span class="dropdown-item-icon">📚</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Manage Subjects</span>
+                                <span class="dropdown-item-description">Configure course subjects</span>
+                            </span>
+                        </a>
                     </div>
                 </div>
                 <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">System</a>
+                    <div class="dropdown-content">
+                        <a href="/system_analytics">
+                            <span class="dropdown-item-icon">📊</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">System Analytics</span>
+                                <span class="dropdown-item-description">Platform-wide insights</span>
+                            </span>
+                        </a>
+                        <a href="/admin_settings">
+                            <span class="dropdown-item-icon">⚙️</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Admin Settings</span>
+                                <span class="dropdown-item-description">System configuration</span>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="navbar-actions">
+                <a href="/logout" class="nav-btn">Logout</a>
+            </div>
+        </div>
+    </div>
                     <a href="#" class="nav-link dropdown-trigger">Assignments</a>
                     <div class="dropdown-content">
                         <a href="/add_assignment">Add Assignment</a>

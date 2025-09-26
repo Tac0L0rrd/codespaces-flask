@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages - EduBridge Teacher Portal</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-links">
+                <a href="/teacher_dashboard" class="nav-link">Dashboard</a>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Classes</a>
+                    <div class="dropdown-content">
+                        <a href="/manage_schedule">
+                            <span class="dropdown-item-icon">📅</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Manage Schedule</span>
+                                <span class="dropdown-item-description">Create and edit class schedules</span>
+                            </span>
+                        </a>
+                        <a href="/mark_attendance">
+                            <span class="dropdown-item-icon">✅</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Mark Attendance</span>
+                                <span class="dropdown-item-description">Track student attendance</span>
+                            </span>
+                        </a>
+                        <a href="/enter_grades">
+                            <span class="dropdown-item-icon">📊</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Enter Grades</span>
+                                <span class="dropdown-item-description">Record student grades</span>
+                            </span>
+                        </a>
+                        <a href="/manage_students">
+                            <span class="dropdown-item-icon">👥</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Enroll Students</span>
+                                <span class="dropdown-item-description">Manage student enrollments</span>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Assignments</a>
+                    <div class="dropdown-content">
+                        <a href="/add_assignment">
+                            <span class="dropdown-item-icon">➕</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Add Assignment</span>
+                                <span class="dropdown-item-description">Create new assignments</span>
+                            </span>
+                        </a>
+                        <a href="/manage_assignments">
+                            <span class="dropdown-item-icon">📝</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Manage Assignments</span>
+                                <span class="dropdown-item-description">Edit and organize assignments</span>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger communication-link">
+                        Communication
+                        {% if unread_messages > 0 %}
+                        <span class="notification-badge">{{ unread_messages }}</span>
+                        {% endif %}
+                    </a>
+                    <div class="dropdown-content">
+                        <a href="/teacher_messages">
+                            <span class="dropdown-item-icon">💬</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Messages</span>
+                                <span class="dropdown-item-description">Communicate with parents</span>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Analytics</a>
+                    <div class="dropdown-content">
+                        <a href="/teacher_analytics">
+                            <span class="dropdown-item-icon">📈</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">View Analytics</span>
+                                <span class="dropdown-item-description">Class performance insights</span>
+                            </span>
+                        </a>
+                        <a href="/teacher_reports">
+                            <span class="dropdown-item-icon">📄</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">View Reports</span>
+                                <span class="dropdown-item-description">Generate detailed reports</span>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+                <a href="/teacher_settings" class="nav-link">Settings</a>
+            </div>
+            <div class="navbar-actions">
+                <a href="/logout" class="nav-btn">Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="center-wrapper">
+            <div class="dashboard-container card-3d">
+                <h1>💬 Parent Communication</h1>
+                <p>View messages from parents and respond to inquiries</p>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-message flash-{{ category }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <div class="messages-container">
+                    <div class="messages-list card-3d">
+                        <h3>📨 Message History</h3>
+                        {% if messages %}
+                        <div class="messages-scroll">
+                            {% for message in messages %}
+                            <div class="message-item {% if message.sender_role == 'teacher' %}sent{% else %}received{% endif %}">
+                                <div class="message-header">
+                                    <div class="message-sender">
+                                        {% if message.sender_role == 'teacher' %}
+                                            <strong>You</strong> to {{ message.parent_name or message.parent_full_name }}
+                                        {% else %}
+                                            <strong>{{ message.parent_name or message.parent_full_name }}</strong>
+                                        {% endif %}
+                                        <span class="message-student">about {{ message.student_name or message.student_full_name }}</span>
+                                    </div>
+                                    <div class="message-time">{{ message.created_at[:16] }}</div>
+                                </div>
+                                <div class="message-subject">
+                                    {% if message.subject_name %}
+                                        Subject: {{ message.subject_name }}
+                                    {% endif %}
+                                </div>
+                                <div class="message-content">
+                                    {{ message.message }}
+                                </div>
+                                <div class="message-actions">
+                                    <form method="POST" action="/delete_message/{{ message.id }}" style="display: inline;" 
+                                          onsubmit="return confirm('Are you sure you want to delete this message?')">
+                                        <button type="submit" class="delete-btn">🗑️ Delete</button>
+                                    </form>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="no-messages">
+                            <p>No messages yet. Parents will contact you here when they need to communicate.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="message-compose card-3d">
+                        <h3>📝 Send Message to Parent</h3>
+                        <form method="POST" class="message-form">
+                            <div class="form-group">
+                                <label for="student_parent">Select Student & Parent:</label>
+                                <select name="student_parent" id="student_parent" required onchange="updateHiddenFields()">
+                                    <option value="">Choose a student and parent...</option>
+                                    {% for student in teacher_students %}
+                                    <option value="{{ student.parent_id }}_{{ student.student_id }}_{{ student.subject_id }}">
+                                        {{ student.student_name or student.student_full_name }} (Parent: {{ student.parent_name or student.parent_full_name }}) - {{ student.subject_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <input type="hidden" name="parent_id" id="parent_id">
+                                <input type="hidden" name="student_id" id="student_id">
+                                <input type="hidden" name="subject_id" id="subject_id">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="message">Message:</label>
+                                <textarea name="message" id="message" rows="6" placeholder="Type your message to the parent here..." required></textarea>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn-3d">Send Message</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateHiddenFields() {
+            const studentParentSelect = document.getElementById('student_parent');
+            const parentIdInput = document.getElementById('parent_id');
+            const studentIdInput = document.getElementById('student_id');
+            const subjectIdInput = document.getElementById('subject_id');
+
+            if (studentParentSelect.value) {
+                const [parentId, studentId, subjectId] = studentParentSelect.value.split('_');
+                parentIdInput.value = parentId;
+                studentIdInput.value = studentId;
+                subjectIdInput.value = subjectId;
+            } else {
+                parentIdInput.value = '';
+                studentIdInput.value = '';
+                subjectIdInput.value = '';
+            }
+        }
+    </script>
+
+    <style>
+        .messages-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .messages-list, .message-compose {
+            padding: 1.5rem;
+        }
+
+        .messages-scroll {
+            max-height: 600px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+
+        .message-item {
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: rgba(248, 249, 250, 0.5);
+        }
+
+        .message-item.sent {
+            background: rgba(40, 167, 69, 0.1);
+            border-color: rgba(40, 167, 69, 0.3);
+        }
+
+        .message-item.received {
+            background: rgba(0, 123, 255, 0.1);
+            border-color: rgba(0, 123, 255, 0.3);
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .message-sender {
+            font-weight: 500;
+        }
+
+        .message-student {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .message-time {
+            color: #666;
+            font-size: 0.8em;
+        }
+
+        .message-subject {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 0.5rem;
+        }
+
+        .message-content {
+            line-height: 1.4;
+        }
+
+        .no-messages {
+            text-align: center;
+            color: #666;
+            padding: 2rem;
+        }
+
+        .message-form {
+            margin-top: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #262626;
+            font-weight: 500;
+        }
+
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid rgba(0,0,0,0.12);
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            background: rgba(248, 249, 250, 0.5);
+        }
+
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3283b8;
+            background: white;
+        }
+
+        .form-actions {
+            text-align: right;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .messages-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    
+    <style>
+        .notification-badge {
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 0.7em;
+            font-weight: bold;
+            margin-left: 5px;
+            min-width: 18px;
+            text-align: center;
+            display: inline-block;
+        }
+        
+        .message-actions {
+            margin-top: 0.5rem;
+            text-align: right;
+        }
+        
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: background-color 0.2s;
+        }
+        
+        .delete-btn:hover {
+            background: #c82333;
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ff3b30;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 0.65em;
+            font-weight: bold;
+            min-width: 16px;
+            height: 16px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid white;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        .communication-link {
+            position: relative;
+            display: inline-block;
+        }
+    </style>

@@ -7,18 +7,32 @@
     <title>Academic Progress - EduBridge</title>
 </head>
 <body>
-    <div class="navbar">
+            <div class="navbar">
         <div class="navbar-container">
             <div class="navbar-links">
                 <a href="/student_dashboard" class="nav-link">Dashboard</a>
                 <div class="dropdown">
                     <a href="#" class="nav-link dropdown-trigger active">Academic</a>
                     <div class="dropdown-content">
-                        <a href="/student_progress">Progress Tracking</a>
-                        <a href="/student_attendance">Attendance Records</a>
+                        <a href="/student_progress">
+                            <span class="dropdown-item-icon">📊</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">My Progress</span>
+                                <span class="dropdown-item-description">View academic performance</span>
+                            </span>
+                        </a>
+                        <a href="/student_attendance">
+                            <span class="dropdown-item-icon">✅</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">My Attendance</span>
+                                <span class="dropdown-item-description">Check attendance records</span>
+                            </span>
+                        </a>
                     </div>
                 </div>
-                <a href="/logout" class="nav-link">Logout</a>
+            </div>
+            <div class="navbar-actions">
+                <a href="/logout" class="nav-btn">Logout</a>
             </div>
         </div>
     </div>

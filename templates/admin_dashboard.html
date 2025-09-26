@@ -7,6 +7,55 @@
     <title>Admin Dashboard - EduBridge</title>
 </head>
 <body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-links">
+                <a href="/admin" class="nav-link active">Dashboard</a>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Management</a>
+                    <div class="dropdown-content">
+                        <a href="/manage_users">
+                            <span class="dropdown-item-icon">�</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Manage Users</span>
+                                <span class="dropdown-item-description">Add and manage user accounts</span>
+                            </span>
+                        </a>
+                        <a href="/manage_subjects">
+                            <span class="dropdown-item-icon">�</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Manage Subjects</span>
+                                <span class="dropdown-item-description">Configure course subjects</span>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">System</a>
+                    <div class="dropdown-content">
+                        <a href="/system_analytics">
+                            <span class="dropdown-item-icon">📊</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">System Analytics</span>
+                                <span class="dropdown-item-description">Platform-wide insights</span>
+                            </span>
+                        </a>
+                        <a href="/admin_settings">
+                            <span class="dropdown-item-icon">⚙️</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Admin Settings</span>
+                                <span class="dropdown-item-description">System configuration</span>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="navbar-actions">
+                <a href="/logout" class="nav-btn">Logout</a>
+            </div>
+        </div>
+    </div>
+    <div class="main-content">
     <div class="center-wrapper">
         <div class="dashboard-container card-3d">
             <h1>Admin Dashboard</h1>
@@ -20,6 +69,7 @@
                 <a class="btn-3d" href="/logout">Logout</a>
             </div>
         </div>
+    </div>
     </div>
 </body>
 </html>
