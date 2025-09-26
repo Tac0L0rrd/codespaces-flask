@@ -1,4 +1,9 @@
-# 🎓 EduBridge - Enterprise School Management System
+# 🎓 EduBridge - En| Role | Username | Password | Features Available |
+|------|----------|----------|-------------------|
+| **👑 Admin** | `admin` | `admin123` | Full system management, analytics, API keys |
+| **👨‍🏫 Teacher** | `teacher1` | `teacher123` | Grade management, attendance, real-time notifications, parent messaging |
+| **👩‍🎓 Student** | `student1` | `student123` | View grades, attendance, receive notifications |
+| **👨‍👩‍👧‍👦 Parent** | `parent1` | `parent123` | Monitor child's progress, receive updates, direct teacher communication |se School Management System
 
 A comprehensive Flask-based education management system featuring advanced capabilities for modern educational institutions. Built with role-based access control, real-time notifications, analytics, and enterprise integrations.
 
@@ -26,7 +31,14 @@ Use these demo accounts to explore the system:
 
 ## 🚀 Advanced Features
 
-### 📧 **Email Notifications**
+### � **Parent-Teacher Messaging System**
+- **Bidirectional Communication**: Direct messaging between parents and teachers
+- **Subject-Specific Messages**: Messages tied to specific subjects and teachers
+- **Message Deletion**: Both parents and teachers can delete messages
+- **Notification Badges**: iPhone-style badges showing unread message counts
+- **Real-time Updates**: Instant message delivery and status updates
+
+### �📧 **Email Notifications**
 - **Automated Alerts**: Grade notifications, assignment due dates, attendance alerts
 - **HTML Templates**: Professional email formatting with institution branding
 - **Parent Notifications**: Real-time updates sent to parent email addresses
@@ -37,6 +49,7 @@ Use these demo accounts to explore the system:
 - **Multi-Child Support**: Single parent account can monitor multiple students
 - **Real-time Updates**: Instant notifications about grades, attendance, and assignments
 - **Progress Tracking**: Comprehensive academic performance analytics
+- **Direct Teacher Communication**: Integrated messaging system with teachers
 
 ### 🧠 **Advanced Analytics**
 - **Machine Learning**: Performance prediction using scikit-learn algorithms
@@ -91,10 +104,10 @@ Use these demo accounts to explore the system:
 - **Responsive Mobile-First**: Optimized for all device sizes
 
 ### 📊 **Project Metrics**
-- **Lines of Code**: ~1,000+ Python, ~800+ CSS, ~500+ HTML
-- **Core Features**: 20+ comprehensive functionalities
-- **Database Tables**: 7 interconnected relational tables
-- **User Roles**: 3 distinct permission levels (Admin, Teacher, Student)
+- **Lines of Code**: ~9,000+ Python, ~800+ CSS, ~500+ HTML
+- **Core Features**: 25+ comprehensive functionalities
+- **Database Tables**: 8 interconnected relational tables (including messaging)
+- **User Roles**: 4 distinct permission levels (Admin, Teacher, Student, Parent)
 - **Responsive Breakpoints**: Desktop (1200px+), Tablet (768px), Mobile (320px+)
 
 ### 🔧 **Code Quality Features**
@@ -125,7 +138,8 @@ Use these demo accounts to explore the system:
 - ✏️ **Grade Entry**: Enter and update student grades with 4-digit precision
 - 📋 **Attendance Tracking**: Mark daily attendance with history
 - 📝 **Assignment Management**: Create, edit, and track assignments
-- 📊 **Comprehensive Reports**: View detailed class performance analytics
+- � **Parent Communication**: Direct messaging with parents about student progress
+- �📊 **Comprehensive Reports**: View detailed class performance analytics
 - ⚙️ **Settings**: Customize notification preferences
 
 ### 🎓 **Student Features**
@@ -163,15 +177,16 @@ Use these demo accounts to explore the system:
 
 ## 📊 Database Architecture
 
-**7 Comprehensive Tables:**
+**8 Comprehensive Tables:**
 
-- **Users**: Admin, teacher, and student profiles with role management
+- **Users**: Admin, teacher, student, and parent profiles with role management
 - **Subjects**: Course catalog with teacher assignments
 - **Assignments**: Grade tracking with subject relationships  
 - **Enrollments**: Student-subject relationships
 - **Attendance**: Daily attendance records with date tracking
 - **Schedule**: Class period and time management
 - **User Settings**: Personalized notification preferences
+- **Parent Teacher Messages**: Bidirectional messaging system with read status tracking
 
 ## 🎯 Core Functionality
 
@@ -261,6 +276,18 @@ edubridge/
 ├── index.py              # Vercel entry point
 ├── requirements.txt      # Python dependencies
 ├── vercel.json           # Vercel deployment config
+├── school.db            # SQLite database
+├── API_DOCUMENTATION.md # Complete API documentation
+├── PROBLEM_RESOLUTION_SUMMARY.md # Development notes
+├── parent_portal.py     # Parent-teacher messaging system
+├── advanced_analytics.py # ML analytics and data visualization
+├── api_module.py        # RESTful API implementation
+├── email_service.py     # Email notification system
+├── export_module.py     # PDF/Excel export functionality
+├── i18n_module.py       # Multi-language support
+├── lms_integration.py   # LMS integration capabilities
+├── realtime_module.py   # WebSocket real-time features
+├── create_parent_demo.py # Demo data creation
 ├── static/
 │   ├── styles.css        # Custom CSS styling
 │   ├── favicon.svg       # Modern SVG favicon
@@ -270,21 +297,24 @@ edubridge/
 │   ├── login.html        # Authentication pages
 │   ├── *_dashboard.html  # Role-specific dashboards
 │   ├── manage_*.html     # Management interfaces
+│   ├── parent_*.html     # Parent portal templates
+│   ├── teacher_messages.html # Teacher messaging interface
 │   └── ...              # Additional templates
 └── docs/                # Documentation files
 ```
 
 ## 🔮 Future Roadmap
 
-- [ ] **Email Notifications**: Automated grade and assignment alerts
-- [ ] **Parent Portal**: Parent access to student information
-- [ ] **Advanced Analytics**: Machine learning insights and data visualization dashboards
 - [ ] **Mobile App**: Native iOS/Android applications
-- [ ] **API Development**: RESTful API for external integrations
-- [ ] **Real-time Features**: WebSocket notifications for instant updates
-- [ ] **Export Functionality**: PDF report generation and data export
-- [ ] **Multi-Language Support**: Internationalization features
-- [ ] **LMS Integration**: Moodle, Canvas, Blackboard compatibility
+- [ ] **Advanced ML Models**: Enhanced predictive analytics with deep learning
+- [ ] **Video Conferencing**: Integrated virtual classroom capabilities
+- [ ] **Advanced Security**: Multi-factor authentication and encryption
+- [ ] **Cloud Storage**: File upload and document management system
+- [ ] **Advanced Reporting**: Custom dashboard builder and advanced visualizations
+- [ ] **Integration APIs**: Expanded third-party system integrations
+- [ ] **Performance Monitoring**: System health monitoring and alerting
+- [ ] **Backup & Recovery**: Automated database backup and disaster recovery
+- [ ] **Scalability**: Multi-server deployment and load balancing
 
 ## 💼 Why This Project Matters
 
