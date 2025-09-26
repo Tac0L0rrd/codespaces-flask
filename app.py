@@ -63,16 +63,21 @@ except ImportError as e:
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
-DATABASE = os.path.join(os.path.dirname(__file__), 'school.db')
+
+# Database configuration - use in-memory for Vercel, file-based for local development
+if os.environ.get('VERCEL_DEPLOYMENT'):
+    DATABASE = ':memory:'  # In-memory database for Vercel
+else:
+    DATABASE = os.path.join(os.path.dirname(__file__), 'school.db')
 
 # --- Helper Functions ---
 def get_db():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
-    
-    # Create tables if they don't exist
+
+    # Always create tables for in-memory database or if they don't exist
     cur = conn.cursor()
-    
+
     # Users table
     cur.execute('''CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY,
@@ -1271,15 +1276,107 @@ def manage_schedule():
 
 # --- Initialize Database ---
 def init_db():
-    if not os.path.exists(DATABASE):
+    # For Vercel (in-memory) or if database doesn't exist locally
+    if os.environ.get('VERCEL_DEPLOYMENT') or not os.path.exists(DATABASE):
         conn = sqlite3.connect(DATABASE)
         cur = conn.cursor()
-        cur.execute('''CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT UNIQUE, password TEXT, role TEXT)''')
-        cur.execute('''CREATE TABLE subjects (id INTEGER PRIMARY KEY, name TEXT, teacher_id INTEGER REFERENCES users(id))''')
-        cur.execute('''CREATE TABLE assignments (id INTEGER PRIMARY KEY, name TEXT, grade REAL, subject_id INTEGER, user_id INTEGER)''')
-        cur.execute('''CREATE TABLE enrollments (user_id INTEGER, subject_id INTEGER)''')
-        cur.execute('''CREATE TABLE schedule (user_id INTEGER, subject_id INTEGER, day TEXT, period INTEGER)''')
-        cur.execute('''CREATE TABLE attendance (id INTEGER PRIMARY KEY, user_id INTEGER, subject_id INTEGER, date TEXT, present INTEGER)''')
+
+        # Create tables
+        cur.execute('''CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY,
+            username TEXT UNIQUE,
+            password TEXT,
+            role TEXT,
+            full_name TEXT,
+            email TEXT
+        )''')
+        cur.execute('''CREATE TABLE IF NOT EXISTS subjects (
+            id INTEGER PRIMARY KEY,
+            name TEXT,
+            teacher_id INTEGER REFERENCES users(id),
+            teacher_name TEXT
+        )''')
+        cur.execute('''CREATE TABLE IF NOT EXISTS assignments (
+            id INTEGER PRIMARY KEY,
+            name TEXT,
+            grade REAL,
+            subject_id INTEGER,
+            user_id INTEGER,
+            date_created TEXT DEFAULT CURRENT_TIMESTAMP
+        )''')
+        cur.execute('''CREATE TABLE IF NOT EXISTS enrollments (
+            user_id INTEGER,
+            subject_id INTEGER,
+            PRIMARY KEY (user_id, subject_id)
+        )''')
+        cur.execute('''CREATE TABLE IF NOT EXISTS schedule (
+            user_id INTEGER,
+            subject_id INTEGER,
+            day TEXT,
+            period INTEGER,
+            PRIMARY KEY (user_id, subject_id, day, period)
+        )''')
+        cur.execute('''CREATE TABLE IF NOT EXISTS attendance (
+            id INTEGER PRIMARY KEY,
+            user_id INTEGER,
+            subject_id INTEGER,
+            date TEXT,
+            present INTEGER
+        )''')
+        cur.execute('''CREATE TABLE IF NOT EXISTS user_settings (
+            user_id INTEGER PRIMARY KEY,
+            notifications_enabled INTEGER DEFAULT 1,
+            language TEXT DEFAULT 'en'
+        )''')
+        cur.execute('''CREATE TABLE IF NOT EXISTS parent_teacher_messages (
+            id INTEGER PRIMARY KEY,
+            parent_id INTEGER,
+            teacher_id INTEGER,
+            subject_id INTEGER,
+            message TEXT,
+            is_read INTEGER DEFAULT 0,
+            date_sent TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (parent_id) REFERENCES users(id),
+            FOREIGN KEY (teacher_id) REFERENCES users(id),
+            FOREIGN KEY (subject_id) REFERENCES subjects(id)
+        )''')
+
+        # Insert demo data for Vercel deployment
+        if os.environ.get('VERCEL_DEPLOYMENT'):
+            # Create demo users
+            demo_users = [
+                ('admin', 'admin123', 'admin', 'System Administrator', 'admin@edubridge.com'),
+                ('teacher1', 'teacher123', 'teacher', 'John Smith', 'john@edubridge.com'),
+                ('student1', 'student123', 'student', 'Alice Johnson', 'alice@edubridge.com'),
+                ('parent1', 'parent123', 'parent', 'Bob Johnson', 'bob@edubridge.com')
+            ]
+
+            for username, password, role, full_name, email in demo_users:
+                try:
+                    cur.execute('INSERT INTO users (username, password, role, full_name, email) VALUES (?, ?, ?, ?, ?)',
+                              (username, password, role, full_name, email))
+                except sqlite3.IntegrityError:
+                    pass  # User already exists
+
+            # Create demo subjects
+            demo_subjects = [
+                ('Mathematics', 2, 'John Smith'),
+                ('English', 2, 'John Smith'),
+                ('Science', 2, 'John Smith')
+            ]
+
+            for name, teacher_id, teacher_name in demo_subjects:
+                try:
+                    cur.execute('INSERT INTO subjects (name, teacher_id, teacher_name) VALUES (?, ?, ?)',
+                              (name, teacher_id, teacher_name))
+                except sqlite3.IntegrityError:
+                    pass
+
+            # Create enrollments
+            cur.execute('INSERT OR IGNORE INTO enrollments (user_id, subject_id) VALUES (3, 1)')
+            cur.execute('INSERT OR IGNORE INTO enrollments (user_id, subject_id) VALUES (3, 2)')
+            cur.execute('INSERT OR IGNORE INTO enrollments (user_id, subject_id) VALUES (3, 3)')
+
         conn.commit()
         conn.close()
 
@@ -1333,6 +1430,10 @@ def feature_available(feature_name):
         'i18n': I18N_AVAILABLE,
         'lms': LMS_AVAILABLE
     }.get(feature_name, False)
+
+# Initialize database on app startup for Vercel
+if os.environ.get('VERCEL_DEPLOYMENT'):
+    init_db()
 
 if __name__ == '__main__':
     init_db()

@@ -1,5 +1,16 @@
 """
-Parent Portal Module
+Pimport sqlite3
+import os
+from datetime import datetime
+from typing import List, Dict, Optional
+
+class ParentPortal:
+    def __init__(self):
+        # Use same database configuration as main app
+        if os.environ.get('VERCEL_DEPLOYMENT'):
+            self.database = ':memory:'  # In-memory database for Vercel
+        else:
+            self.database = os.path.join(os.path.dirname(__file__), 'school.db')rtal Module
 Provides parent access to their children's academic information
 """
 

@@ -11,7 +11,12 @@ from datetime import datetime
 from typing import Dict, Optional, List
 
 i18n_bp = Blueprint('i18n', __name__, url_prefix='/i18n')
-DATABASE = os.path.join(os.path.dirname(__file__), 'school.db')
+
+# Database configuration - use same as main app
+if os.environ.get('VERCEL_DEPLOYMENT'):
+    DATABASE = ':memory:'  # In-memory database for Vercel
+else:
+    DATABASE = os.path.join(os.path.dirname(__file__), 'school.db')
 
 # Default translations
 DEFAULT_TRANSLATIONS = {
