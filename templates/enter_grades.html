@@ -11,8 +11,6 @@
         th { background-color: rgba(255, 255, 255, 0.1); color: white; }
         .grade-input { width: 100px; padding: 5px; text-align: center; }
         .subject-section { margin-bottom: 30px; }
-        .grade-form { text-align: center; }
-        .grade-form form { display: inline-block; margin: 5px; }
     </style>
 </head>
 <body>
@@ -124,15 +122,13 @@
                                 {% if ns.last_student != '' %}
                                     </td>
                                     <td>
-                                        <div class="grade-form">
-                                            <form method="post" style="display: inline;">
-                                                <input type="hidden" name="student_id" value="{{ item['student_id'] }}">
-                                                <input type="hidden" name="subject_id" value="{{ subject['id'] }}">
-                                                <input type="text" name="assignment_name" placeholder="Assignment name" required>
-                                                <input type="number" name="grade" placeholder="Grade" class="grade-input" min="0" max="100" required>
-                                                <button type="submit" class="btn-3d">Add</button>
-                                            </form>
-                                        </div>
+                                        <form method="post" style="display: inline;">
+                                            <input type="hidden" name="student_id" value="{{ item['student_id'] }}">
+                                            <input type="hidden" name="subject_id" value="{{ subject['id'] }}">
+                                            <input type="text" name="assignment_name" placeholder="Assignment name" required>
+                                            <input type="number" name="grade" placeholder="Grade" class="grade-input" min="0" max="100" required>
+                                            <button type="submit" class="btn-3d">Add</button>
+                                        </form>
                                     </td>
                                 </tr>
                                 {% endif %}
@@ -142,16 +138,14 @@
                             {% endif %}
 
                             {% if item['assignment_name'] %}
-                                <div class="grade-form">
-                                    <form method="post" style="display: inline-block;">
-                                        <input type="hidden" name="assignment_id" value="{{ item['assignment_id'] }}">
-                                        <input type="hidden" name="student_id" value="{{ item['student_id'] }}">
-                                        <input type="hidden" name="subject_id" value="{{ subject['id'] }}">
-                                        {{ item['assignment_name'] }}:
-                                        <input type="number" name="grade" value="{{ item['grade'] }}" class="grade-input" min="0" max="100" required>
-                                        <button type="submit" class="btn-3d">Update</button>
-                                    </form>
-                                </div>
+                                <form method="post" style="display: inline-block; margin-right: 15px;">
+                                    <input type="hidden" name="assignment_id" value="{{ item['assignment_id'] }}">
+                                    <input type="hidden" name="student_id" value="{{ item['student_id'] }}">
+                                    <input type="hidden" name="subject_id" value="{{ subject['id'] }}">
+                                    {{ item['assignment_name'] }}:
+                                    <input type="number" name="grade" value="{{ item['grade'] }}" class="grade-input" min="0" max="100" required>
+                                    <button type="submit" class="btn-3d">Update</button>
+                                </form>
                             {% endif %}
 
                             {% set ns.last_student = item['student_name'] %}
@@ -160,15 +154,13 @@
                         {% if filtered_assignments %}
                             </td>
                             <td>
-                                <div class="grade-form">
-                                    <form method="post" style="display: inline;">
-                                        <input type="hidden" name="student_id" value="{{ filtered_assignments[-1]['student_id'] }}">
-                                        <input type="hidden" name="subject_id" value="{{ subject['id'] }}">
-                                        <input type="text" name="assignment_name" placeholder="Assignment name" required>
-                                        <input type="number" name="grade" placeholder="Grade" class="grade-input" min="0" max="100" required>
-                                        <button type="submit" class="btn-3d">Add</button>
-                                    </form>
-                                </div>
+                                <form method="post" style="display: inline;">
+                                    <input type="hidden" name="student_id" value="{{ filtered_assignments[-1]['student_id'] }}">
+                                    <input type="hidden" name="subject_id" value="{{ subject['id'] }}">
+                                    <input type="text" name="assignment_name" placeholder="Assignment name" required>
+                                    <input type="number" name="grade" placeholder="Grade" class="grade-input" min="0" max="100" required>
+                                    <button type="submit" class="btn-3d">Add</button>
+                                </form>
                             </td>
                             </tr>
                         {% endif %}
