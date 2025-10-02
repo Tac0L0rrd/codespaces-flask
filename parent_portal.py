@@ -629,40 +629,6 @@ def register_parent_routes(app):
         return render_template('parent_child_progress.html', 
                              student_data=progress_data)
     
-    @app.route('/parent_message_teacher', methods=['GET', 'POST'])
-    def parent_message_teacher():
-        from flask import session, redirect, url_for, render_template, request, flash
-        if 'user_id' not in session or session.get('role') != 'parent':
-            return redirect(url_for('login'))
-        
-        if request.method == 'POST':
-            student_id = request.form.get('student_id')
-            teacher_id = request.form.get('teacher_id')
-            subject_id = request.form.get('subject_id')
-            message = request.form.get('message')
-            
-            # Create message record (you'd need to implement the messaging system)
-            portal = ParentPortal()
-            success = portal.send_message_to_teacher(
-                session['user_id'], teacher_id, student_id, subject_id, message
-            )
-            
-            if success:
-                flash('Message sent successfully!', 'success')
-            else:
-                flash('Failed to send message. Please try again.', 'error')
-            
-            return redirect(url_for('parent_dashboard'))
-        
-        # Get children and their teachers for the form
-        portal = ParentPortal()
-        children_data = portal.get_children_info(session['user_id'])
-        
-        # Get unread message count
-        unread_messages = portal.get_unread_message_count(session['user_id'], 'parent')
-        
-        return render_template('parent_message_teacher.html', children=children_data, unread_messages=unread_messages)
-    
     @app.route('/teacher_messages', methods=['GET', 'POST'])
     def teacher_messages():
         from flask import session, redirect, url_for, render_template, request, flash
