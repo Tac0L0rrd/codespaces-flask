@@ -1533,8 +1533,8 @@ def init_db():
             FOREIGN KEY (author_id) REFERENCES users(id)
         )''')
 
-        # Insert demo data for Vercel deployment
-        if os.environ.get('VERCEL_DEPLOYMENT'):
+        # Insert demo data for Vercel and Render deployments
+        if os.environ.get('VERCEL_DEPLOYMENT') or os.environ.get('RENDER'):
             # Create demo users
             demo_users = [
                 ('admin', 'admin123', 'admin', 'System Administrator', 'admin@edubridge.com'),
@@ -1641,8 +1641,8 @@ def feature_available(feature_name):
         'lms': LMS_AVAILABLE
     }.get(feature_name, False)
 
-# Initialize database on app startup for Vercel
-if os.environ.get('VERCEL_DEPLOYMENT'):
+# Initialize database on app startup for Vercel and Render
+if os.environ.get('VERCEL_DEPLOYMENT') or os.environ.get('RENDER'):
     init_db()
 
 if __name__ == '__main__':
@@ -1650,7 +1650,10 @@ if __name__ == '__main__':
     print("\n=== Education Management System Starting ===")
     print("Basic features: ✓ Authentication, ✓ Student/Teacher Management, ✓ Grades, ✓ Attendance")
     
+    # Use PORT environment variable for cloud deployment (Render, Heroku, etc.)
+    port = int(os.environ.get('PORT', 5000))
+    
     if REALTIME_AVAILABLE and socketio:
-        socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+        socketio.run(app, debug=False, host='0.0.0.0', port=port)
     else:
-        app.run(debug=True, host='0.0.0.0', port=5000)
+        app.run(debug=False, host='0.0.0.0', port=port)

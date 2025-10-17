@@ -18,21 +18,20 @@ pytest>=7.4.0
 pytest-flask>=1.2.0
 
 # =============================================================================
-# ADVANCED FEATURES - OPTIONAL (Heavy packages for analytics)
-# Uncomment these lines if you need advanced analytics functionality
-# Note: These packages significantly increase deployment size
+# ADVANCED FEATURES - REQUIRED FOR FULL FUNCTIONALITY
+# These packages are needed for the advanced analytics and export features
 # =============================================================================
 
-# Analytics and data processing (Heavy - ~150MB+)
-# pandas>=2.0.0
-# numpy>=1.24.0
-# scikit-learn>=1.3.0
-# matplotlib>=3.7.0
-# seaborn>=0.12.0
+# Analytics and data processing (Required for advanced_analytics.py)
+pandas>=2.0.0
+numpy>=1.24.0
+scikit-learn>=1.3.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
 
-# Export functionality (Moderate size increase)
-# reportlab>=4.0.0  # PDF generation
-# openpyxl>=3.1.0   # Excel export
+# Export functionality (Required for export_module.py)
+reportlab>=4.0.0  # PDF generation
+openpyxl>=3.1.0   # Excel export
 
 # LMS Integration (Lightweight)
 # requests>=2.31.0  # Already included above
