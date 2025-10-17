@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="stylesheet" href="/static/styles.css">
+    <title>Weekly Schedule - EduBridge</title>
+    <style>
+        .schedule-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .schedule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .week-toggle {
+            display: flex;
+            gap: 10px;
+        }
+
+        .week-btn {
+            padding: 8px 16px;
+            border: 2px solid #007bff;
+            background: white;
+            color: #007bff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .week-btn.active {
+            background: #007bff;
+            color: white;
+        }
+
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .schedule-table th,
+        .schedule-table td {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            border-right: 1px solid #eee;
+        }
+
+        .schedule-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .period-header {
+            background: #f8f9fa;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .schedule-cell {
+            min-height: 80px;
+            vertical-align: top;
+            position: relative;
+        }
+
+        .schedule-cell.empty {
+            background: #f8f9fa;
+        }
+
+        .class-block {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 2px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .class-block:hover {
+            transform: translateY(-2px);
+        }
+
+        .class-name {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .class-teacher {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .class-period {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .current-time-indicator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #ff6b6b;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .time-column {
+            width: 80px;
+            background: #f8f9fa;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .day-column {
+            min-width: 150px;
+        }
+
+        .schedule-legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .next-class {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            border: 2px solid #ff6b6b;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 5px #ff6b6b; }
+            to { box-shadow: 0 0 20px #ff6b6b, 0 0 30px #ff6b6b; }
+        }
+
+        .schedule-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .summary-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .summary-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .schedule-table {
+                font-size: 12px;
+            }
+
+            .schedule-table th,
+            .schedule-table td {
+                padding: 8px;
+            }
+
+            .class-block {
+                padding: 6px;
+            }
+
+            .class-name {
+                font-size: 12px;
+            }
+
+            .class-teacher {
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-links">
+                <a href="/student_dashboard" class="nav-link">Dashboard</a>
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger active">Academic</a>
+                    <div class="dropdown-content">
+                        <a href="/student_progress">
+                            <span class="dropdown-item-icon">📊</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">My Progress</span>
+                                <span class="dropdown-item-description">View academic performance</span>
+                            </span>
+                        </a>
+                        <a href="/student_attendance">
+                            <span class="dropdown-item-icon">📅</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">My Attendance</span>
+                                <span class="dropdown-item-description">Check attendance records</span>
+                            </span>
+                        </a>
+                        <a href="/student_schedule">
+                            <span class="dropdown-item-icon">📅</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Weekly Schedule</span>
+                                <span class="dropdown-item-description">View class timetable</span>
+                            </span>
+                        </a>
+                        <a href="/announcements">
+                            <span class="dropdown-item-icon">📢</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Announcements</span>
+                                <span class="dropdown-item-description">Read latest announcements</span>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="navbar-actions">
+                <a href="/logout" class="nav-btn">Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="center-wrapper">
+            <div class="schedule-container card-3d">
+                <div class="schedule-header">
+                    <h1>📅 Weekly Schedule</h1>
+                    <div class="week-toggle">
+                        <button class="week-btn active" onclick="switchWeek('A')">Week A</button>
+                        <button class="week-btn" onclick="switchWeek('B')">Week B</button>
+                    </div>
+                </div>
+
+                <!-- Schedule Summary -->
+                <div class="schedule-summary">
+                    <div class="summary-card">
+                        <div class="summary-value">{{ subjects|length }}</div>
+                        <div class="summary-label">Total Subjects</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-value">{{ periods|length }}</div>
+                        <div class="summary-label">Periods per Day</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-value">{{ days|length }}</div>
+                        <div class="summary-label">School Days</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-value">{{ current_week }}</div>
+                        <div class="summary-label">Current Week</div>
+                    </div>
+                </div>
+
+                <!-- Schedule Table -->
+                <div style="overflow-x: auto; margin-top: 20px;">
+                    <table class="schedule-table">
+                        <thead>
+                            <tr>
+                                <th class="time-column">Period</th>
+                                {% for day in days %}
+                                <th class="day-column">{{ day }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for period in periods %}
+                            <tr>
+                                <td class="period-header">{{ period }}</td>
+                                {% for day in days %}
+                                <td class="schedule-cell">
+                                    {% set class_info = schedule_grid[day][period] %}
+                                    {% if class_info %}
+                                    <div class="class-block {% if loop.first and period == 1 %}next-class{% endif %}">
+                                        <div class="class-name">{{ class_info.subject_name }}</div>
+                                        <div class="class-teacher">{{ class_info.teacher_name or 'TBD' }}</div>
+                                        <div class="class-period">Period {{ period }}</div>
+                                    </div>
+                                    {% else %}
+                                    <div class="empty"></div>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Legend -->
+                <div class="schedule-legend">
+                    <div class="legend-item">
+                        <div class="legend-color"></div>
+                        <span>Scheduled Class</span>
+                    </div>
+                    <div class="legend-item">
+                        <div style="width: 16px; height: 16px; background: #f8f9fa; border-radius: 4px;"></div>
+                        <span>Free Period</span>
+                    </div>
+                    <div class="legend-item">
+                        <div style="width: 16px; height: 16px; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); border-radius: 4px; border: 2px solid #ff6b6b;"></div>
+                        <span>Next Class</span>
+                    </div>
+                </div>
+
+                <div class="action-buttons" style="margin-top: 30px;">
+                    <a class="btn-3d" href="/student_dashboard">← Back to Dashboard</a>
+                    <a class="btn-3d" href="/logout">Logout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchWeek(weekType) {
+            // In a real implementation, this would reload the schedule for the selected week
+            // For now, just update the button states
+            document.querySelectorAll('.week-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // You could add AJAX call here to load different week schedule
+            // For demo purposes, we'll just show an alert
+            if (weekType === 'B') {
+                alert('Week B schedule feature coming soon! Currently showing Week A schedule.');
+                document.querySelectorAll('.week-btn')[0].classList.add('active');
+                document.querySelectorAll('.week-btn')[1].classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>

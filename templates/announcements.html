@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="stylesheet" href="/static/styles.css">
+    <title>Announcements - EduBridge</title>
+    <style>
+        .announcements-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .announcement-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #007bff;
+        }
+
+        .announcement-card.urgent {
+            border-left-color: #dc3545;
+            background: linear-gradient(135deg, #ffe6e6 0%, #fff 100%);
+        }
+
+        .announcement-card.important {
+            border-left-color: #ffc107;
+            background: linear-gradient(135deg, #fff8e1 0%, #fff 100%);
+        }
+
+        .announcement-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .announcement-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin: 0;
+        }
+
+        .announcement-meta {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .announcement-content {
+            line-height: 1.6;
+            color: #555;
+            margin-bottom: 15px;
+        }
+
+        .announcement-priority {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .priority-normal {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .priority-important {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .priority-urgent {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .no-announcements {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .no-announcements i {
+            font-size: 3em;
+            margin-bottom: 20px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-links">
+                {% if session.role == 'student' %}
+                <a href="/student_dashboard" class="nav-link">Dashboard</a>
+                {% elif session.role == 'teacher' %}
+                <a href="/teacher_dashboard" class="nav-link">Dashboard</a>
+                {% elif session.role == 'parent' %}
+                <a href="/parent_dashboard" class="nav-link">Dashboard</a>
+                {% elif session.role == 'admin' %}
+                <a href="/admin" class="nav-link">Dashboard</a>
+                {% endif %}
+
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger active">📢 Announcements</a>
+                    <div class="dropdown-content">
+                        <a href="/announcements">
+                            <span class="dropdown-item-icon">📢</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">View Announcements</span>
+                                <span class="dropdown-item-description">Read latest announcements</span>
+                            </span>
+                        </a>
+                        {% if session.role == 'teacher' or session.role == 'admin' %}
+                        <a href="/manage_announcements">
+                            <span class="dropdown-item-icon">➕</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Manage Announcements</span>
+                                <span class="dropdown-item-description">Create and manage posts</span>
+                            </span>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="navbar-actions">
+                <a href="/logout" class="nav-btn">Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="center-wrapper">
+            <div class="announcements-container card-3d">
+                <h1>📢 Announcements</h1>
+                <p>Stay updated with the latest news and important information.</p>
+
+                {% if announcements %}
+                    {% for announcement in announcements %}
+                    <div class="announcement-card {% if announcement.urgent %}urgent{% elif announcement.important %}important{% endif %}">
+                        <div class="announcement-header">
+                            <div>
+                                <h3 class="announcement-title">{{ announcement.title }}</h3>
+                                <div class="announcement-meta">
+                                    By {{ announcement.author_name or 'System' }} •
+                                    {{ announcement.created_at[:10] }}
+                                    {% if announcement.visibility != 'all' %}
+                                    • Visible to {{ announcement.visibility }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <span class="announcement-priority priority-{{ announcement.priority }}">
+                                {{ announcement.priority }}
+                            </span>
+                        </div>
+
+                        <div class="announcement-content">
+                            {{ announcement.content | replace('\n', '<br>') | safe }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-announcements">
+                        <i>📭</i>
+                        <h3>No Announcements</h3>
+                        <p>There are no announcements at this time.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

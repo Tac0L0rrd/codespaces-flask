@@ -74,73 +74,6 @@ else:
 def get_db():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
-
-    # Always create tables for in-memory database or if they don't exist
-    cur = conn.cursor()
-
-    # Users table
-    cur.execute('''CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY,
-        username TEXT UNIQUE,
-        password TEXT,
-        role TEXT
-    )''')
-    
-    # Subjects table
-    cur.execute('''CREATE TABLE IF NOT EXISTS subjects (
-        id INTEGER PRIMARY KEY,
-        name TEXT,
-        teacher_id INTEGER REFERENCES users(id)
-    )''')
-    
-    # Assignments table
-    cur.execute('''CREATE TABLE IF NOT EXISTS assignments (
-        id INTEGER PRIMARY KEY,
-        name TEXT,
-        grade REAL,
-        subject_id INTEGER,
-        user_id INTEGER
-    )''')
-    
-    # Enrollments table
-    cur.execute('''CREATE TABLE IF NOT EXISTS enrollments (
-        id INTEGER PRIMARY KEY,
-        user_id INTEGER,
-        subject_id INTEGER,
-        FOREIGN KEY (user_id) REFERENCES users(id),
-        FOREIGN KEY (subject_id) REFERENCES subjects(id),
-        UNIQUE(user_id, subject_id)
-    )''')
-    
-    # Attendance table
-    cur.execute('''CREATE TABLE IF NOT EXISTS attendance (
-        id INTEGER PRIMARY KEY,
-        user_id INTEGER,
-        subject_id INTEGER,
-        date TEXT,
-        present INTEGER,
-        FOREIGN KEY (user_id) REFERENCES users(id),
-        FOREIGN KEY (subject_id) REFERENCES subjects(id)
-    )''')
-    
-    # User settings table
-    cur.execute('''CREATE TABLE IF NOT EXISTS user_settings (
-        user_id INTEGER PRIMARY KEY,
-        email_notifications BOOLEAN DEFAULT 0,
-        assignment_reminders BOOLEAN DEFAULT 0,
-        attendance_reminders BOOLEAN DEFAULT 0,
-        FOREIGN KEY (user_id) REFERENCES users(id)
-    )''')
-    
-    # System settings table
-    cur.execute('''CREATE TABLE IF NOT EXISTS system_settings (
-        id INTEGER PRIMARY KEY,
-        setting_name TEXT UNIQUE,
-        setting_value TEXT,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )''')
-    
-    conn.commit()
     return conn
 
 def is_admin():
@@ -1274,12 +1207,259 @@ def manage_schedule():
                          days=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
                          periods=range(1, 9))
 
+# --- Announcements System ---
+
+@app.route('/announcements')
+def view_announcements():
+    """View announcements based on user role"""
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user_role = session.get('role')
+    user_id = session['user_id']
+    conn = get_db()
+    cur = conn.cursor()
+    
+    # Get announcements based on visibility
+    if user_role == 'admin':
+        # Admins see all announcements
+        cur.execute('''SELECT announcements.*, users.username as author_name
+                      FROM announcements
+                      LEFT JOIN users ON announcements.author_id = users.id
+                      WHERE announcements.is_active = 1
+                      ORDER BY announcements.priority DESC, announcements.created_at DESC''')
+    elif user_role == 'teacher':
+        # Teachers see all announcements
+        cur.execute('''SELECT announcements.*, users.username as author_name
+                      FROM announcements
+                      LEFT JOIN users ON announcements.author_id = users.id
+                      WHERE announcements.is_active = 1
+                      ORDER BY announcements.priority DESC, announcements.created_at DESC''')
+    elif user_role == 'student':
+        # Students see announcements visible to them
+        cur.execute('''SELECT announcements.*, users.username as author_name
+                      FROM announcements
+                      LEFT JOIN users ON announcements.author_id = users.id
+                      WHERE announcements.is_active = 1
+                      AND (announcements.visibility = 'all' OR announcements.visibility = 'students')
+                      ORDER BY announcements.priority DESC, announcements.created_at DESC''')
+    elif user_role == 'parent':
+        # Parents see announcements visible to them
+        cur.execute('''SELECT announcements.*, users.username as author_name
+                      FROM announcements
+                      LEFT JOIN users ON announcements.author_id = users.id
+                      WHERE announcements.is_active = 1
+                      AND (announcements.visibility = 'all' OR announcements.visibility = 'parents')
+                      ORDER BY announcements.priority DESC, announcements.created_at DESC''')
+    
+    announcements = cur.fetchall()
+    
+    # Mark urgent announcements
+    for announcement in announcements:
+        if announcement['priority'] == 'urgent':
+            announcement['urgent'] = True
+        elif announcement['priority'] == 'important':
+            announcement['important'] = True
+    
+    return render_template('announcements.html', announcements=announcements)
+
+@app.route('/manage_announcements', methods=['GET', 'POST'])
+def manage_announcements():
+    """Manage announcements (teachers and admins)"""
+    if not (is_teacher() or is_admin()):
+        return redirect(url_for('login'))
+    
+    user_id = session['user_id']
+    conn = get_db()
+    cur = conn.cursor()
+    
+    if request.method == 'POST':
+        if 'delete' in request.form:
+            # Delete announcement
+            announcement_id = request.form['announcement_id']
+            cur.execute('DELETE FROM announcements WHERE id = ? AND author_id = ?', 
+                       (announcement_id, user_id))
+            conn.commit()
+            return redirect(url_for('manage_announcements'))
+        else:
+            # Create new announcement
+            title = request.form['title']
+            content = request.form['content']
+            visibility = request.form['visibility']
+            priority = request.form['priority']
+            
+            cur.execute('''INSERT INTO announcements (title, content, author_id, visibility, priority)
+                          VALUES (?, ?, ?, ?, ?)''', 
+                       (title, content, user_id, visibility, priority))
+            conn.commit()
+            return redirect(url_for('manage_announcements'))
+    
+    # Get user's announcements
+    cur.execute('''SELECT * FROM announcements 
+                   WHERE author_id = ? 
+                   ORDER BY created_at DESC''', (user_id,))
+    my_announcements = cur.fetchall()
+    
+    return render_template('manage_announcements.html', announcements=my_announcements)
+
+@app.route('/gradebook/<int:subject_id>', methods=['GET', 'POST'])
+def gradebook(subject_id):
+    """Gradebook view for teachers - table layout with students and assignments"""
+    if not is_teacher():
+        return redirect(url_for('login'))
+    
+    user_id = session['user_id']
+    conn = get_db()
+    cur = conn.cursor()
+    
+    # Verify teacher owns this subject
+    cur.execute('SELECT name FROM subjects WHERE id = ? AND teacher_id = ?', (subject_id, user_id))
+    subject = cur.fetchone()
+    if not subject:
+        return redirect(url_for('teacher_dashboard'))
+    
+    if request.method == 'POST':
+        # Handle grade updates
+        for key, value in request.form.items():
+            if key.startswith('grade_'):
+                # Parse student_id and assignment_id from form key
+                _, student_id, assignment_id = key.split('_')
+                grade = float(value) if value.strip() else None
+                
+                if grade is not None:
+                    # Update or insert grade
+                    cur.execute('''INSERT OR REPLACE INTO assignments 
+                                  (user_id, subject_id, name, grade) 
+                                  VALUES (?, ?, 
+                                    (SELECT name FROM assignments WHERE id = ?), 
+                                    ?)''', 
+                               (int(student_id), subject_id, int(assignment_id), grade))
+                else:
+                    # Remove grade if empty
+                    cur.execute('DELETE FROM assignments WHERE user_id = ? AND subject_id = ? AND id = ?',
+                               (int(student_id), subject_id, int(assignment_id)))
+        conn.commit()
+        return redirect(url_for('gradebook', subject_id=subject_id))
+    
+    # Get all students enrolled in this subject
+    cur.execute('''SELECT users.id, users.username, users.full_name
+                   FROM users
+                   JOIN enrollments ON users.id = enrollments.user_id
+                   WHERE enrollments.subject_id = ? AND users.role = 'student'
+                   ORDER BY users.username''', (subject_id,))
+    students = cur.fetchall()
+    
+    # Get all assignments for this subject
+    cur.execute('''SELECT DISTINCT assignments.name, assignments.id
+                   FROM assignments
+                   WHERE assignments.subject_id = ?
+                   ORDER BY assignments.name''', (subject_id,))
+    assignments = cur.fetchall()
+    
+    # Create grade matrix (student_id -> assignment_id -> grade)
+    grade_matrix = {}
+    for student in students:
+        grade_matrix[student['id']] = {}
+        for assignment in assignments:
+            cur.execute('''SELECT grade FROM assignments 
+                          WHERE user_id = ? AND subject_id = ? AND name = ?''',
+                       (student['id'], subject_id, assignment['name']))
+            result = cur.fetchone()
+            grade_matrix[student['id']][assignment['id']] = result['grade'] if result else None
+    
+    # Calculate student averages
+    student_averages = {}
+    for student in students:
+        grades = [grade for grade in grade_matrix[student['id']].values() if grade is not None]
+        student_averages[student['id']] = sum(grades) / len(grades) if grades else 0
+    
+    # Calculate assignment averages
+    assignment_averages = {}
+    for assignment in assignments:
+        grades = [grade_matrix[student['id']][assignment['id']] 
+                 for student in students 
+                 if grade_matrix[student['id']][assignment['id']] is not None]
+        assignment_averages[assignment['id']] = sum(grades) / len(grades) if grades else 0
+    
+    return render_template('gradebook.html', 
+                         subject=subject,
+                         students=students,
+                         assignments=assignments,
+                         grade_matrix=grade_matrix,
+                         student_averages=student_averages,
+                         assignment_averages=assignment_averages,
+                         subject_id=subject_id)
+
+@app.route('/student_schedule')
+def student_schedule():
+    """Display student's weekly schedule with rotating schedule support"""
+    if not is_student():
+        return redirect(url_for('login'))
+    
+    user_id = session['user_id']
+    conn = get_db()
+    cur = conn.cursor()
+    
+    # Get student's enrolled subjects
+    cur.execute('''SELECT subjects.id, subjects.name, subjects.teacher_id, users.username as teacher_name
+                   FROM subjects
+                   JOIN enrollments ON subjects.id = enrollments.subject_id
+                   JOIN users ON subjects.teacher_id = users.id
+                   WHERE enrollments.user_id = ?''', (user_id,))
+    subjects = cur.fetchall()
+    
+    # Get schedule data
+    cur.execute('''SELECT schedule.*, subjects.name as subject_name, users.username as teacher_name
+                   FROM schedule
+                   JOIN subjects ON schedule.subject_id = subjects.id
+                   JOIN enrollments ON subjects.id = enrollments.subject_id
+                   LEFT JOIN users ON subjects.teacher_id = users.id
+                   WHERE enrollments.user_id = ? AND (schedule.week_type = ? OR schedule.week_type = 'both')
+                   ORDER BY 
+                     CASE schedule.day
+                       WHEN 'Monday' THEN 1
+                       WHEN 'Tuesday' THEN 2
+                       WHEN 'Wednesday' THEN 3
+                       WHEN 'Thursday' THEN 4
+                       WHEN 'Friday' THEN 5
+                     END,
+                     schedule.period''', (user_id, current_week))
+    schedule_data = cur.fetchall()
+    
+    # Organize schedule by day and period
+    schedule_grid = {}
+    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+    periods = range(1, 9)  # Assuming 8 periods per day
+    
+    for day in days:
+        schedule_grid[day] = {}
+        for period in periods:
+            schedule_grid[day][period] = None
+    
+    # Fill in the schedule
+    for item in schedule_data:
+        if item['day'] in schedule_grid and item['period'] in schedule_grid[item['day']]:
+            schedule_grid[item['day']][item['period']] = item
+    
+    # Determine current week type (A or B) - simple implementation
+    # In a real system, this would be configurable
+    current_week = 'A'  # Default to A, could be calculated based on school calendar
+    
+    return render_template('student_schedule.html', 
+                         schedule_grid=schedule_grid,
+                         days=days,
+                         periods=periods,
+                         current_week=current_week,
+                         subjects=subjects)
+
 # --- Initialize Database ---
 def init_db():
     # For Vercel (in-memory) or if database doesn't exist locally
     if os.environ.get('VERCEL_DEPLOYMENT') or not os.path.exists(DATABASE):
         conn = sqlite3.connect(DATABASE)
         cur = conn.cursor()
+
+        # Create tables...
 
         # Create tables
         cur.execute('''CREATE TABLE IF NOT EXISTS users (
@@ -1310,11 +1490,11 @@ def init_db():
             PRIMARY KEY (user_id, subject_id)
         )''')
         cur.execute('''CREATE TABLE IF NOT EXISTS schedule (
-            user_id INTEGER,
             subject_id INTEGER,
             day TEXT,
             period INTEGER,
-            PRIMARY KEY (user_id, subject_id, day, period)
+            week_type TEXT DEFAULT 'both',
+            PRIMARY KEY (subject_id, day, period, week_type)
         )''')
         cur.execute('''CREATE TABLE IF NOT EXISTS attendance (
             id INTEGER PRIMARY KEY,
@@ -1339,6 +1519,18 @@ def init_db():
             FOREIGN KEY (parent_id) REFERENCES users(id),
             FOREIGN KEY (teacher_id) REFERENCES users(id),
             FOREIGN KEY (subject_id) REFERENCES subjects(id)
+        )''')
+        cur.execute('''CREATE TABLE IF NOT EXISTS announcements (
+            id INTEGER PRIMARY KEY,
+            title TEXT NOT NULL,
+            content TEXT NOT NULL,
+            author_id INTEGER,
+            visibility TEXT DEFAULT 'all', -- 'all', 'students', 'teachers', 'parents', or subject_id
+            priority TEXT DEFAULT 'normal', -- 'normal', 'important', 'urgent'
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            expires_at TIMESTAMP,
+            is_active BOOLEAN DEFAULT 1,
+            FOREIGN KEY (author_id) REFERENCES users(id)
         )''')
 
         # Insert demo data for Vercel deployment
@@ -1379,6 +1571,24 @@ def init_db():
 
         conn.commit()
         conn.close()
+
+    # Always ensure announcements table exists (for both local and Vercel)
+    conn = sqlite3.connect(DATABASE)
+    cur = conn.cursor()
+    cur.execute('''CREATE TABLE IF NOT EXISTS announcements (
+        id INTEGER PRIMARY KEY,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        author_id INTEGER,
+        visibility TEXT DEFAULT 'all',
+        priority TEXT DEFAULT 'normal',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        expires_at TIMESTAMP,
+        is_active BOOLEAN DEFAULT 1,
+        FOREIGN KEY (author_id) REFERENCES users(id)
+    )''')
+    conn.commit()
+    conn.close()
 
     pass
 

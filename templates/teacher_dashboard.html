@@ -1,7 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="icon" type="image/x-                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-trigger">Communication</a>
+                    <div class="dropdown-content">
+                        <a href="/teacher_messages">
+                            <span class="dropdown-item-icon">💬</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Messages</span>
+                                <span class="dropdown-item-description">Communicate with parents</span>
+                            </span>
+                        </a>
+                        <a href="/manage_announcements">
+                            <span class="dropdown-item-icon">📢</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Announcements</span>
+                                <span class="dropdown-item-description">Post school announcements</span>
+                            </span>
+                        </a>
+                    </div>
+                </div>/static/favicon.ico">
     <link rel="stylesheet" href="/static/styles.css">
     <title>Teacher Dashboard - EduBridge</title>
 </head>
@@ -33,6 +51,13 @@
                             <span class="dropdown-item-content">
                                 <span class="dropdown-item-title">Enter Grades</span>
                                 <span class="dropdown-item-description">Record student grades</span>
+                            </span>
+                        </a>
+                        <a href="/gradebook/{{ subjects[0].id if subjects else 0 }}">
+                            <span class="dropdown-item-icon">📋</span>
+                            <span class="dropdown-item-content">
+                                <span class="dropdown-item-title">Gradebook</span>
+                                <span class="dropdown-item-description">View and edit gradebook</span>
                             </span>
                         </a>
                         <a href="/manage_students">
